@@ -298,12 +298,23 @@ export function getStoredSiteConfig(): SiteConfig {
     if (!agency.whatsappNumber || agency.whatsappNumber === '919876543210') {
       agency.whatsappNumber = '923020487103';
     }
+    let services = parsed.services || servicesData;
+    if (Array.isArray(services)) {
+      servicesData.forEach((s) => {
+        if (!services.some((existing: any) => existing.id === s.id)) {
+          services.push(s);
+        }
+      });
+    } else {
+      services = servicesData;
+    }
     return {
       ...DEFAULT_SITE_CONFIG,
       ...parsed,
       logo: { ...DEFAULT_SITE_CONFIG.logo, ...(parsed.logo || {}) },
       hero: { ...DEFAULT_SITE_CONFIG.hero, ...(parsed.hero || {}) },
       agency,
+      services,
       seo: { ...DEFAULT_SITE_CONFIG.seo, ...(parsed.seo || {}) },
       pages: parsed.pages || DEFAULT_SITE_PAGES,
       inquiries: parsed.inquiries || DEFAULT_INQUIRIES,

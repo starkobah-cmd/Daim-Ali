@@ -104,6 +104,24 @@ export const servicesData: ServiceItem[] = [
     deliveryTime: 'Monthly Retainer',
   },
   {
+    id: 'keyword-research',
+    title: 'SEO Friendly Keyword Research',
+    shortDesc: 'High-intent, low-competition keyword research mapped to search intent for rapid Google rankings.',
+    fullDesc: 'Supercharge your search visibility with data-backed keyword intelligence. We unearth lucrative low-difficulty search queries, long-tail search terms, competitor content gaps, and buyer-intent keywords so your pages rank faster and attract converting traffic.',
+    iconName: 'Search',
+    category: 'marketing',
+    features: [
+      'High-Intent & Low-Competition Keyword Discovery',
+      'Competitor Keyword Gap & Difficulty (KD) Analysis',
+      'Search Intent Mapping (Informational & Commercial)',
+      'Long-Tail Search Queries & Question Clusters',
+      'Clean Spreadsheet Report with Search Volume & CPC Metrics'
+    ],
+    startingPrice: '$49',
+    deliveryTime: '2-3 Days',
+    badge: 'High ROI',
+  },
+  {
     id: 'profile-backlinks',
     title: 'Profile Backlinks',
     shortDesc: 'High-DA manual profile backlinks from authoritative platforms to build domain score & TRUST.',
@@ -246,6 +264,7 @@ export const PORTFOLIO_CATEGORIES = [
   'Information Reel Editing',
   'Blog & Content Writing',
   'SEO Services',
+  'SEO Friendly Keyword Research',
   'Profile Backlinks',
   'Social Backlinks'
 ];
@@ -337,6 +356,18 @@ export const portfolioData: PortfolioItem[] = [
     tags: ['Social Signals', 'Link Building', 'Brand Awareness'],
     client: 'Local Services Inc',
     featured: false,
+  },
+  {
+    id: 'port-10',
+    title: 'High-Intent Keyword Intelligence Blueprint',
+    category: 'SEO Friendly Keyword Research',
+    image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80',
+    description: 'Data-driven keyword research strategy identifying 250+ low-difficulty commercial search queries for a B2B SaaS platform.',
+    detailedDescription: 'Conducted comprehensive search intent mapping, competitor ranking gap audit, and long-tail cluster analysis that drove 180% organic impressions boost in 60 days.',
+    tags: ['Keyword Research', 'Search Intent', 'Ahrefs & Semrush', 'Content Strategy'],
+    client: 'Apex Cloud Solutions',
+    stats: '180% Organic Impressions Boost',
+    featured: true,
   }
 ];
 

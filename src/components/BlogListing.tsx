@@ -8,8 +8,6 @@ import {
   User,
   ArrowRight,
   ShieldCheck,
-  Code2,
-  Lock,
   Mail,
   CheckCircle2,
   ChevronLeft,
@@ -22,8 +20,8 @@ import { BLOG_CATEGORIES } from '../data/blogData';
 interface BlogListingProps {
   posts: BlogPost[];
   onSelectPost: (slug: string) => void;
-  onOpenAdmin: () => void;
-  onOpenSitemap: () => void;
+  onOpenAdmin?: () => void;
+  onOpenSitemap?: () => void;
 }
 
 export const BlogListing: React.FC<BlogListingProps> = ({
@@ -89,29 +87,11 @@ export const BlogListing: React.FC<BlogListingProps> = ({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Top Header Controls (Sitemap & Admin Login Bar) */}
+        {/* Top Header Information Bar */}
         <div className="flex items-center justify-between py-2 border-b border-slate-800/80 mb-8 text-xs">
           <div className="flex items-center gap-3 text-slate-400">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>Netronomic Knowledge Hub & Official Engineering Insights</span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onOpenSitemap}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-sky-400 hover:text-sky-300 hover:border-sky-500/40 transition-colors font-medium cursor-pointer"
-            >
-              <Code2 className="w-3.5 h-3.5" />
-              <span>XML Sitemap</span>
-            </button>
-
-            <button
-              onClick={onOpenAdmin}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-300 hover:bg-sky-500 hover:text-white transition-all font-semibold cursor-pointer shadow-sm"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Blog Portal</span>
-            </button>
           </div>
         </div>
 

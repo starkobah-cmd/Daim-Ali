@@ -95,7 +95,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenQuote, onNavigate, siteCon
 
           {/* Col 2: Services List */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Our 9 Services</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Our Core Services</h4>
             <ul className="space-y-2 text-xs">
               {servicesData.map((s) => (
                 <li key={s.id}>

@@ -15,6 +15,7 @@ import {
   Clock,
   Sparkles,
   Info,
+  Search,
 } from 'lucide-react';
 import { servicesData } from '../data/agencyData';
 import { ServiceItem } from '../types';
@@ -36,6 +37,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService, onRequestQu
       case 'Smartphone': return <Smartphone className="w-6 h-6" />;
       case 'FileText': return <FileText className="w-6 h-6" />;
       case 'TrendingUp': return <TrendingUp className="w-6 h-6" />;
+      case 'Search': return <Search className="w-6 h-6" />;
       case 'Link': return <Link className="w-6 h-6" />;
       case 'Share2': return <Share2 className="w-6 h-6" />;
       default: return <Sparkles className="w-6 h-6" />;
@@ -64,18 +66,18 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService, onRequestQu
             Comprehensive Digital Solutions Built to <span className="text-sky-600">Elevate Your Business</span>
           </h2>
           <p className="text-base sm:text-lg text-slate-600">
-            From website architecture and mobile applications to logo identity, reel editing, SEO, and backlink networks — explore our 9 flagship services.
+            From website architecture and mobile applications to logo identity, reel editing, SEO keyword research, and backlink networks — explore our flagship services.
           </p>
         </div>
 
         {/* Category Filters */}
         <div className="flex flex-wrap items-center justify-center gap-2 mt-8 mb-12">
           {[
-            { id: 'all', label: 'All 9 Services' },
+            { id: 'all', label: `All Services (${servicesData.length})` },
             { id: 'development', label: 'Web Development' },
             { id: 'design', label: 'Logo & Graphic Design' },
             { id: 'editing', label: 'Reel Video Editing' },
-            { id: 'marketing', label: 'SEO, Backlinks & Content' },
+            { id: 'marketing', label: 'SEO, Keywords & Marketing' },
           ].map((tab) => (
             <button
               key={tab.id}
