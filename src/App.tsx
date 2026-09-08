@@ -116,8 +116,8 @@ export default function App() {
   useEffect(() => {
     if (blogView !== 'single-blog') {
       const homePage = siteConfig.pages?.find(p => p.slug === '/');
-      const pageTitle = homePage?.metaTitle || 'Netronomic Web — Premier Digital Agency, Web Design & SEO Solutions';
-      const pageDesc = homePage?.metaDescription || 'We engineer high-converting Websites, Mobile Apps, Logos, Video Reels, SEO rankings, and Profile Backlinks for growing businesses.';
+      const pageTitle = homePage?.metaTitle || 'Netronomic Web – Creative Digital Agency';
+      const pageDesc = homePage?.metaDescription || 'Netronomic Web is a full-service creative agency dedicated to transforming brand ideas into powerful digital realities. We provide professional web design, graphic design, branding, SEO, and digital marketing services.';
       const pageOgImage = homePage?.ogImage || siteConfig.seo?.defaultOgImage || siteConfig.logo?.customLogoUrl;
 
       applyHeadMeta({
