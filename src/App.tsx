@@ -38,6 +38,7 @@ import { getStoredSiteConfig, saveSiteConfigToStorage, DEFAULT_SITE_CONFIG, Site
 
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
+import { applyHeadMeta } from './utils/metaTags';
 
 export default function App() {
 
@@ -114,7 +115,18 @@ export default function App() {
   // Handle URL hash / path routes (e.g. /admin, /dashboard, /cms, #admin)
   useEffect(() => {
     if (blogView !== 'single-blog') {
-      document.title = 'Netronomic Web — Premier Digital Agency, Web Design & SEO Solutions';
+      const homePage = siteConfig.pages?.find(p => p.slug === '/');
+      const pageTitle = homePage?.metaTitle || 'Netronomic Web — Premier Digital Agency, Web Design & SEO Solutions';
+      const pageDesc = homePage?.metaDescription || 'We engineer high-converting Websites, Mobile Apps, Logos, Video Reels, SEO rankings, and Profile Backlinks for growing businesses.';
+      const pageOgImage = homePage?.ogImage || siteConfig.seo?.defaultOgImage || siteConfig.logo?.customLogoUrl;
+
+      applyHeadMeta({
+        title: pageTitle,
+        description: pageDesc,
+        ogImage: pageOgImage,
+        canonicalUrl: siteConfig.seo?.canonicalUrl || 'https://netronomicweb.com/',
+        googleSiteVerification: siteConfig.seo?.googleSiteVerification || '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM'
+      });
     }
     const customLogo = siteConfig.logo?.customLogoUrl;
     if (customLogo) {
@@ -123,7 +135,7 @@ export default function App() {
         (el as HTMLLinkElement).href = customLogo;
       });
     }
-  }, [blogView, siteConfig.logo?.customLogoUrl]);
+  }, [blogView, siteConfig.pages, siteConfig.seo, siteConfig.logo?.customLogoUrl]);
 
   useEffect(() => {
     const handleRouteCheck = () => {
@@ -459,8 +471,8 @@ export default function App() {
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
             </span>
             <MessageSquare className="w-5 h-5 fill-white/20 text-white" />
-            <span className="text-xs font-bold tracking-wide hidden sm:inline-block">
-              Message on WhatsApp
+            <span className="text-xs font-bold tracking-wide">
+              Message Netronomic web on WhatsApp
             </span>
           </a>
         </aside>

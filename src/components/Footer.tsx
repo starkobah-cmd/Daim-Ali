@@ -73,7 +73,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenQuote, onNavigate, siteCon
                   <span className="font-bold text-sm">Message Netronomic web on WhatsApp</span>
                 </div>
                 <span className="text-[11px] font-mono text-emerald-100 opacity-90 pl-6">
-                  {activeAgency.whatsappNumber?.startsWith('http') ? 'https://wa.me/923020487103' : `+${activeAgency.whatsappNumber || '923020487103'}`}
+                  https://wa.me/923020487103
                 </span>
               </a>
               

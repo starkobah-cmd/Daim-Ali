@@ -197,10 +197,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
               href={(whatsappNum.startsWith('http') ? whatsappNum : `https://wa.me/${whatsappNum}`)}
               target="_blank"
               rel="noopener noreferrer"
-              className="whatsapp-shine-btn w-full flex items-center justify-center gap-2 text-sm font-bold py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-md transition-all"
+              className="whatsapp-shine-btn w-full flex items-center justify-center gap-2 text-sm font-bold py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-md transition-all cursor-pointer"
+              title="Message Netronomic web on WhatsApp"
             >
               <MessageSquare className="w-4 h-4 text-white" />
-              <span>Chat on WhatsApp</span>
+              <span>Message Netronomic web on WhatsApp</span>
             </a>
             
             <button

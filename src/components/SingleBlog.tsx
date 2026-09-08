@@ -22,6 +22,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { BlogPost, BlogComment } from '../types';
+import { applyHeadMeta } from '../utils/metaTags';
 
 interface SingleBlogProps {
   post: BlogPost;
@@ -47,7 +48,18 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
   // Dynamic SEO meta updates in document head
   useEffect(() => {
     const originalTitle = document.title;
-    document.title = post.seoTitle || `${post.title} | Netronomic Web`;
+    const resolvedTitle = post.seoTitle || `${post.title} | Netronomic Web`;
+    const resolvedDesc = post.metaDescription || post.excerpt;
+    const resolvedImage = post.ogImage || post.featuredImage;
+    const canonical = post.canonicalUrl || `https://netronomicweb.com/blog/${post.slug}`;
+
+    applyHeadMeta({
+      title: resolvedTitle,
+      description: resolvedDesc,
+      ogImage: resolvedImage,
+      canonicalUrl: canonical,
+      googleSiteVerification: '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM'
+    });
 
     // Inject Schema.org Article JSON-LD
     const script = document.createElement('script');
@@ -57,7 +69,7 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
       headline: post.title,
-      image: [post.featuredImage],
+      image: [resolvedImage],
       datePublished: post.publishedAt,
       author: {
         '@type': 'Person',
@@ -71,7 +83,7 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
           url: 'https://netronomicweb.com/logo.png'
         }
       },
-      description: post.metaDescription || post.excerpt
+      description: resolvedDesc
     });
     document.head.appendChild(script);
 

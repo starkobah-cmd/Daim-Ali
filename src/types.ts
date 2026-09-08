@@ -118,9 +118,13 @@ export interface BlogPost {
   isFeatured?: boolean;
   status: PostStatus;
   scheduledDate?: string;
+  focusKeyword?: string;
+  secondaryKeywords?: string;
   seoTitle?: string;
   metaDescription?: string;
   canonicalUrl?: string;
+  ogImage?: string;
+  seoScore?: number;
   comments: BlogComment[];
 }
 

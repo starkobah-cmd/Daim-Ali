@@ -86,8 +86,7 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
 
   const constructWhatsAppLink = () => {
     const num = activeAgency.whatsappNumber || '923020487103';
-    const text = `Hi Netronomic Web! My name is ${formData.name || 'a client'}. I am interested in ${formData.service} with budget ${formData.budget}. Message: ${formData.message || 'I want to get started.'}`;
-    return (num.startsWith('http') ? num : `https://wa.me/${num}?text=${encodeURIComponent(text)}`);
+    return (num.startsWith('http') ? num : `https://wa.me/${num}`);
   };
 
   return (
@@ -138,7 +137,7 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
                 title="Message Netronomic web on WhatsApp"
               >
                 <MessageSquare className="w-4 h-4 text-emerald-600" />
-                <span>Open WhatsApp Chat</span>
+                <span>Message Netronomic web on WhatsApp</span>
               </a>
             </div>
 
@@ -278,7 +277,7 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
                     title="Message Netronomic web on WhatsApp"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    <span>WhatsApp Followup</span>
+                    <span>Message Netronomic web on WhatsApp</span>
                   </a>
                 </div>
               </motion.div>

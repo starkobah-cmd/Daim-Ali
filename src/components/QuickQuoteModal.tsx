@@ -67,14 +67,14 @@ export const QuickQuoteModal: React.FC<QuickQuoteModalProps> = ({
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <a
-                  href={`https://wa.me/${siteConfig?.agency?.whatsappNumber || '923020487103'}?text=${encodeURIComponent(`Hi Netronomic Web! My name is ${formData.name || 'a client'}. I just submitted a quote request for ${formData.service}.`)}`}
+                  href={siteConfig?.agency?.whatsappNumber?.startsWith('http') ? siteConfig?.agency?.whatsappNumber : `https://wa.me/${siteConfig?.agency?.whatsappNumber || '923020487103'}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="whatsapp-shine-btn w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                   title="Message Netronomic web on WhatsApp"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Instant WhatsApp Connect</span>
+                  <span>Message Netronomic web on WhatsApp</span>
                 </a>
                 <button
                   onClick={onClose}
@@ -169,7 +169,7 @@ export const QuickQuoteModal: React.FC<QuickQuoteModalProps> = ({
               </div>
 
               <a
-                href={`https://wa.me/${siteConfig?.agency?.whatsappNumber || '923020487103'}?text=${encodeURIComponent(`Hi Netronomic Web! I would like to inquire about ${formData.service || 'your services'}.`)}`}
+                href={siteConfig?.agency?.whatsappNumber?.startsWith('http') ? siteConfig?.agency?.whatsappNumber : `https://wa.me/${siteConfig?.agency?.whatsappNumber || '923020487103'}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="whatsapp-shine-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"

@@ -254,7 +254,7 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
 
                 {/* Bottom WhatsApp bar */}
                 <a
-                  href={(activeAgency.whatsappNumber?.startsWith('http') ? activeAgency.whatsappNumber : `https://wa.me/${activeAgency.whatsappNumber || '923020487103'}?text=Hi%20${encodeURIComponent(activeAgency.name)},%20I%20am%20interested%20in%20your%20services.`)}
+                  href={(activeAgency.whatsappNumber?.startsWith('http') ? activeAgency.whatsappNumber : `https://wa.me/${activeAgency.whatsappNumber || '923020487103'}`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="whatsapp-shine-btn flex items-center justify-between p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 hover:border-emerald-300 transition-all group cursor-pointer shadow-sm"
@@ -266,10 +266,10 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
                     </div>
                     <div>
                       <p className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                        <span>Direct WhatsApp Inquiry</span>
+                        <span>Message Netronomic web on WhatsApp</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                       </p>
-                      <p className="text-[11px] text-emerald-700">Message Netronomic web on WhatsApp</p>
+                      <p className="text-[11px] text-emerald-700 font-mono">https://wa.me/923020487103</p>
                     </div>
                   </div>
                   <ArrowRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-1 transition-transform" />

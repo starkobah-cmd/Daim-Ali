@@ -70,12 +70,15 @@ export interface SitePageConfig {
   metaDescription: string;
   focusKeyword: string;
   secondaryKeywords: string;
+  ogImage?: string;
+  seoScore?: number;
   noIndex: boolean;
   sections: PageSectionConfig[];
 }
 
 export interface SiteSeoConfig {
   canonicalUrl: string;
+  googleSiteVerification?: string;
   defaultOgTitle: string;
   defaultOgDescription: string;
   defaultOgImage: string;
@@ -231,6 +234,7 @@ export const DEFAULT_INQUIRIES: InquiryItem[] = [
 
 export const DEFAULT_SEO_CONFIG: SiteSeoConfig = {
   canonicalUrl: 'https://netronomic.com',
+  googleSiteVerification: '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM',
   defaultOgTitle: 'Netronomic Web Agency — Digital Growth Engine',
   defaultOgDescription: 'Full-service web development, mobile apps, branding, video editing, and high-DA SEO backlinks.',
   defaultOgImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',

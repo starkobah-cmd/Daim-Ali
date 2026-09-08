@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "SiteConfig": {
+      "title": "SiteConfig",
+      "description": "Global website configuration, pages, layout and SEO settings",
+      "type": "object",
+      "properties": {
+        "agency": { "type": "object", "description": "Agency contact and info" },
+        "logo": { "type": "object", "description": "Logo configuration" },
+        "hero": { "type": "object", "description": "Hero section configuration" },
+        "pages": { "type": "array", "description": "Configured website pages and sections" },
+        "seo": { "type": "object", "description": "Global SEO configuration" },
+        "services": { "type": "array", "description": "Service items" },
+        "portfolio": { "type": "array", "description": "Portfolio items" },
+        "inquiries": { "type": "array", "description": "User inquiries" }
+      }
+    },
+    "BlogPost": {
+      "title": "BlogPost",
+      "description": "A published or draft blog post with RankMath SEO attributes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "featuredImage": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array" },
+        "status": { "type": "string" },
+        "focusKeyword": { "type": "string" },
+        "seoTitle": { "type": "string" },
+        "metaDescription": { "type": "string" },
+        "ogImage": { "type": "string" },
+        "seoScore": { "type": "number" },
+        "publishedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "slug"]
+    },
+    "PostsCollection": {
+      "title": "PostsCollection",
+      "description": "Collection of blog posts stored in Firestore",
+      "type": "object",
+      "properties": {
+        "posts": { "type": "array", "description": "List of blog posts" }
+      }
+    }
+  },
+  "firestore": {
+    "/settings/main": {
+      "schema": "SiteConfig",
+      "description": "Main agency and site settings"
+    },
+    "/settings/posts": {
+      "schema": "PostsCollection",
+      "description": "Blog articles and publications"
+    }
+  }
+}

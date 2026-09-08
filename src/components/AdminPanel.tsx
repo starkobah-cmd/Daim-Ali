@@ -66,6 +66,8 @@ import { BlogPost, PostStatus, PortfolioItem } from '../types';
 import { BLOG_CATEGORIES } from '../data/blogData';
 import { AdminMediaManager } from './AdminMediaManager';
 import { MediaPickerField } from './MediaPickerField';
+import { SeoAnalysisPanel } from './SeoAnalysisPanel';
+import { analyzeSeo } from '../utils/seoAnalyzer';
 import {
   logoutAdmin,
   getCurrentSession,
@@ -142,6 +144,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Page Editor State
   const [selectedPageId, setSelectedPageId] = useState<string>(siteConfig.pages?.[0]?.id || 'page-home');
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [pageEditorMode, setPageEditorMode] = useState<'sections' | 'seo'>('sections');
 
   // SEO Analyzer State
   const [seoTargetType, setSeoTargetType] = useState<'page' | 'post'>('page');
@@ -504,6 +507,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setIsBlogModalOpen(true);
   };
 
+  const handleUpdatePageSeoField = (pageId: string, field: keyof SitePageConfig, val: any) => {
+    const updatedPages = (localConfig.pages || []).map(p => {
+      if (p.id === pageId) {
+        return { ...p, [field]: val };
+      }
+      return p;
+    });
+    const updatedConfig = { ...localConfig, pages: updatedPages };
+    setLocalConfig(updatedConfig);
+    onSaveSiteConfig(updatedConfig);
+  };
+
   const handleSaveArticleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPost?.title || !editingPost?.slug) {
@@ -511,10 +526,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       return;
     }
 
+    const resolvedSlug = editingPost.slug.startsWith('/') ? editingPost.slug.slice(1) : editingPost.slug;
+    const resolvedTitle = editingPost.seoTitle || editingPost.title;
+    const resolvedDesc = editingPost.metaDescription || editingPost.excerpt || '';
+    const resolvedOgImage = editingPost.ogImage || editingPost.featuredImage || FEATURED_IMAGE_PRESETS[0].url;
+
+    // Calculate score using RankMath analyzer
+    const calculatedSeo = analyzeSeo({
+      focusKeyword: editingPost.focusKeyword || '',
+      seoTitle: resolvedTitle,
+      metaDescription: resolvedDesc,
+      slug: resolvedSlug,
+      content: editingPost.content || '',
+      ogImage: resolvedOgImage
+    });
+
     const postToSave: BlogPost = {
       id: editingPost.id || `post-${Date.now()}`,
       title: editingPost.title,
-      slug: editingPost.slug.startsWith('/') ? editingPost.slug.slice(1) : editingPost.slug,
+      slug: resolvedSlug,
       excerpt: editingPost.excerpt || '',
       content: editingPost.content || '',
       featuredImage: editingPost.featuredImage || FEATURED_IMAGE_PRESETS[0].url,
@@ -529,14 +559,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       tags: editingPost.tags || ['Web', 'SEO'],
       status: (editingPost.status as PostStatus) || 'draft',
       comments: editingPost.comments || [],
-      seoTitle: editingPost.seoTitle || editingPost.title,
-      metaDescription: editingPost.metaDescription || editingPost.excerpt,
+      focusKeyword: editingPost.focusKeyword || '',
+      secondaryKeywords: editingPost.secondaryKeywords || '',
+      seoTitle: resolvedTitle,
+      metaDescription: resolvedDesc,
+      ogImage: resolvedOgImage,
+      seoScore: calculatedSeo.score,
     };
 
     onSavePost(postToSave);
     setIsBlogModalOpen(false);
     setEditingPost(null);
-    triggerSaveNotification('Blog post saved successfully!');
+    triggerSaveNotification(`Blog post saved with SEO score: ${calculatedSeo.score}/100!`);
   };
 
   const handleBulkDelete = () => {
@@ -936,8 +970,68 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
+              {/* PAGE SUB-TABS: SECTIONS VS SEO */}
+              <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800 w-fit">
+                <button
+                  type="button"
+                  onClick={() => setPageEditorMode('sections')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                    pageEditorMode === 'sections' ? 'bg-sky-500 text-slate-950 shadow-md shadow-sky-500/20' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>Modular Sections Layout</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPageEditorMode('seo')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                    pageEditorMode === 'seo' ? 'bg-sky-500 text-slate-950 shadow-md shadow-sky-500/20' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>SEO Settings & Analysis</span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-slate-950 text-sky-400 border border-slate-800">
+                    RankMath Live
+                  </span>
+                </button>
+              </div>
+
+              {/* TAB CONTENT: SEO SETTINGS & ANALYSIS FOR SELECTED PAGE */}
+              {pageEditorMode === 'seo' && selectedPage && (
+                <div className="space-y-4">
+                  <SeoAnalysisPanel
+                    focusKeyword={selectedPage.focusKeyword || ''}
+                    onFocusKeywordChange={(val) => handleUpdatePageSeoField(selectedPage.id, 'focusKeyword', val)}
+                    seoTitle={selectedPage.metaTitle || selectedPage.title || ''}
+                    onSeoTitleChange={(val) => handleUpdatePageSeoField(selectedPage.id, 'metaTitle', val)}
+                    metaDescription={selectedPage.metaDescription || ''}
+                    onMetaDescriptionChange={(val) => handleUpdatePageSeoField(selectedPage.id, 'metaDescription', val)}
+                    slug={selectedPage.slug || ''}
+                    onSlugChange={(val) => handleUpdatePageSeoField(selectedPage.id, 'slug', val)}
+                    ogImage={selectedPage.ogImage || localConfig.seo?.defaultOgImage || ''}
+                    onOgImageChange={(val) => handleUpdatePageSeoField(selectedPage.id, 'ogImage', val)}
+                    content={`${selectedPage.title}\n\n${selectedPage.metaTitle}\n\n${selectedPage.metaDescription}\n\n${selectedPage.sections?.map(s => `${s.name}. ${s.title}. ${s.subtitle}. ${s.badge || ''} ${s.ctaText || ''}`).join('\n\n')}`}
+                    entityType="page"
+                    entityName={selectedPage.title}
+                    onScoreUpdate={(score) => handleUpdatePageSeoField(selectedPage.id, 'seoScore', score)}
+                  />
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={() => triggerSaveNotification(`SEO settings saved for "${selectedPage.title}"!`)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-sky-500/20 transition-all cursor-pointer"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>Save Page SEO to Firestore</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* MODULAR SECTION EDITOR BOARD */}
-              {selectedPage && (
+              {pageEditorMode === 'sections' && selectedPage && (
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                     <div>
@@ -1195,6 +1289,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         </th>
                         <th className="p-4">Article Title</th>
                         <th className="p-4">Category</th>
+                        <th className="p-4 text-center">RankMath SEO</th>
                         <th className="p-4">Status</th>
                         <th className="p-4">Date</th>
                         <th className="p-4 text-right">Actions</th>
@@ -1232,6 +1327,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                               </div>
                             </td>
                             <td className="p-4 font-semibold text-slate-300">{post.category}</td>
+                            <td className="p-4 text-center">
+                              {(() => {
+                                const calculated = analyzeSeo({
+                                  focusKeyword: post.focusKeyword || '',
+                                  seoTitle: post.seoTitle || post.title,
+                                  metaDescription: post.metaDescription || post.excerpt,
+                                  slug: post.slug,
+                                  content: post.content,
+                                  ogImage: post.ogImage || post.featuredImage
+                                });
+                                const finalScore = post.seoScore !== undefined && post.seoScore > 0 ? post.seoScore : calculated.score;
+                                return (
+                                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-mono font-extrabold border ${
+                                    finalScore >= 81
+                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                      : finalScore >= 51
+                                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                                      : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                                  }`}>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                    <span>{finalScore}/100</span>
+                                  </span>
+                                );
+                              })()}
+                            </td>
                             <td className="p-4">
                               <button
                                 onClick={() =>
@@ -1574,6 +1694,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       }
                       className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">Google Site Verification (Search Console)</label>
+                    <input
+                      type="text"
+                      value={localConfig.seo?.googleSiteVerification || ''}
+                      onChange={(e) =>
+                        setLocalConfig({
+                          ...localConfig,
+                          seo: { ...localConfig.seo, googleSiteVerification: e.target.value },
+                        })
+                      }
+                      placeholder="e.g. _bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM"
+                      className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:border-sky-500"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Injected as &lt;meta name="google-site-verification" content="..."&gt; in &lt;head&gt;
+                    </p>
                   </div>
 
                   <MediaPickerField
@@ -2491,7 +2630,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full p-6 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl"
+              className="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full p-6 space-y-6 max-h-[92vh] overflow-y-auto shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div className="flex items-center gap-3">
@@ -2500,20 +2639,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </span>
                   <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
                     <button
+                      type="button"
                       onClick={() => setBlogEditorTab('content')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                        blogEditorTab === 'content' ? 'bg-sky-500 text-slate-950' : 'text-slate-400'
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        blogEditorTab === 'content' ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       Content Editor
                     </button>
                     <button
+                      type="button"
                       onClick={() => setBlogEditorTab('seo')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                        blogEditorTab === 'seo' ? 'bg-sky-500 text-slate-950' : 'text-slate-400'
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        blogEditorTab === 'seo' ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
                       }`}
                     >
-                      On-Page SEO
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>SEO Settings & Analysis</span>
+                      {(() => {
+                        const quickScore = analyzeSeo({
+                          focusKeyword: editingPost.focusKeyword || '',
+                          seoTitle: editingPost.seoTitle || editingPost.title,
+                          metaDescription: editingPost.metaDescription || editingPost.excerpt,
+                          slug: editingPost.slug,
+                          content: editingPost.content,
+                          ogImage: editingPost.ogImage || editingPost.featuredImage
+                        }).score;
+                        return (
+                          <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-extrabold ${
+                            blogEditorTab === 'seo' ? 'bg-slate-950 text-sky-400' : 'bg-slate-900 text-slate-300'
+                          }`}>
+                            {quickScore}/100
+                          </span>
+                        );
+                      })()}
                     </button>
                   </div>
                 </div>
@@ -2608,61 +2767,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </div>
                   </>
                 ) : (
-                  <>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-bold text-slate-300">SEO Meta Title</label>
-                        <span className={`text-[11px] font-mono ${(editingPost.seoTitle?.length || 0) > 60 ? 'text-rose-400 font-bold' : 'text-emerald-400'}`}>
-                          {editingPost.seoTitle?.length || 0} / 60 chars
-                        </span>
-                      </div>
-                      <input
-                        type="text"
-                        value={editingPost.seoTitle || ''}
-                        onChange={(e) => setEditingPost({ ...editingPost, seoTitle: e.target.value })}
-                        className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-bold text-slate-300">Meta Description</label>
-                        <span className={`text-[11px] font-mono ${(editingPost.metaDescription?.length || 0) > 160 ? 'text-rose-400 font-bold' : 'text-emerald-400'}`}>
-                          {editingPost.metaDescription?.length || 0} / 160 chars
-                        </span>
-                      </div>
-                      <textarea
-                        rows={3}
-                        value={editingPost.metaDescription || ''}
-                        onChange={(e) => setEditingPost({ ...editingPost, metaDescription: e.target.value })}
-                        className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1">Focus Keyword</label>
-                        <input
-                          type="text"
-                          value={editingPost.focusKeyword || ''}
-                          onChange={(e) => setEditingPost({ ...editingPost, focusKeyword: e.target.value })}
-                          placeholder="e.g. Web Agency"
-                          className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1">Secondary Keywords</label>
-                        <input
-                          type="text"
-                          value={editingPost.secondaryKeywords || ''}
-                          onChange={(e) => setEditingPost({ ...editingPost, secondaryKeywords: e.target.value })}
-                          placeholder="e.g. Web Development, SEO"
-                          className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                        />
-                      </div>
-                    </div>
-                  </>
+                  <div className="space-y-4">
+                    <SeoAnalysisPanel
+                      focusKeyword={editingPost.focusKeyword || ''}
+                      onFocusKeywordChange={(val) => setEditingPost({ ...editingPost, focusKeyword: val })}
+                      seoTitle={editingPost.seoTitle || editingPost.title || ''}
+                      onSeoTitleChange={(val) => setEditingPost({ ...editingPost, seoTitle: val })}
+                      metaDescription={editingPost.metaDescription || editingPost.excerpt || ''}
+                      onMetaDescriptionChange={(val) => setEditingPost({ ...editingPost, metaDescription: val })}
+                      slug={editingPost.slug || ''}
+                      onSlugChange={(val) => setEditingPost({ ...editingPost, slug: val })}
+                      ogImage={editingPost.ogImage || editingPost.featuredImage || ''}
+                      onOgImageChange={(val) => setEditingPost({ ...editingPost, ogImage: val })}
+                      content={editingPost.content || ''}
+                      entityType="blog"
+                      entityName={editingPost.title || 'Untitled Post'}
+                      onScoreUpdate={(score) => setEditingPost(prev => prev ? { ...prev, seoScore: score } : null)}
+                    />
+                  </div>
                 )}
 
                 <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
