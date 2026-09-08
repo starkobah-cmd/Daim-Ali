@@ -113,6 +113,19 @@ export default function App() {
 
   // Handle URL hash / path routes (e.g. /admin, /dashboard, /cms, #admin)
   useEffect(() => {
+    if (blogView !== 'single-blog') {
+      document.title = 'Netronomic Web — Premier Digital Agency, Web Design & SEO Solutions';
+    }
+    const customLogo = siteConfig.logo?.customLogoUrl;
+    if (customLogo) {
+      const iconLinks = document.querySelectorAll("link[rel*='icon']");
+      iconLinks.forEach((el) => {
+        (el as HTMLLinkElement).href = customLogo;
+      });
+    }
+  }, [blogView, siteConfig.logo?.customLogoUrl]);
+
+  useEffect(() => {
     const handleRouteCheck = () => {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
