@@ -1,0 +1,472 @@
+import {
+  ServiceItem,
+  ProcessStep,
+  WhyChooseItem,
+  PortfolioItem,
+  PricingPlan,
+  Testimonial,
+  FAQItem,
+} from '../types';
+
+export const agencyInfo = {
+  name: 'Netronomic Web',
+  tagline: 'Transforming Ideas Into Exceptional Digital Experiences',
+  phone: '+92 3020487103',
+  whatsappNumber: '923020487103',
+  email: 'daimali2453@gmail.com',
+  address: 'Netronomic Tower, Tech Innovation Hub, Sector 62',
+  hours: 'Mon - Sat: 9:00 AM - 7:00 PM IST',
+  social: {
+    facebook: 'https://facebook.com',
+    instagram: 'https://instagram.com',
+    twitter: 'https://twitter.com',
+    linkedin: 'https://linkedin.com',
+    youtube: 'https://youtube.com',
+    github: 'https://github.com',
+  },
+  stats: [
+    { label: 'Completed Projects', value: '450+' },
+    { label: 'Happy Clients', value: '280+' },
+    { label: 'Client Satisfaction Rate', value: '99.4%' },
+    { label: 'Years Experience', value: '8+' },
+  ],
+};
+
+// 2. Our Services - Exact 9 requested services
+export const servicesData: ServiceItem[] = [
+  {
+    id: 'website-design',
+    title: 'Website Design & Development',
+    shortDesc: 'Custom responsive websites engineered for ultra-fast performance, SEO supremacy, and high conversions.',
+    fullDesc: 'We craft modern, visually breathtaking websites tailored to your brand. From single-page landing pages to enterprise portals, our full-stack web engineering guarantees lightning load speeds, intuitive UI/UX, and flawless mobile responsiveness.',
+    iconName: 'Globe',
+    category: 'development',
+    features: ['Custom Next.js & React Architecture', '100% Mobile & Tablet Responsive', 'Speed Optimization (95+ Lighthouse)', 'CMS & Admin Dashboard Integration', 'Basic On-Page SEO Included'],
+    startingPrice: '$299',
+    deliveryTime: '5-7 Days',
+    badge: 'Most Popular',
+  },
+  {
+    id: 'logo-design',
+    title: 'Logo Design',
+    shortDesc: 'Memorable, modern visual identity and branding assets that instantly command brand authority.',
+    fullDesc: 'Your logo is the heartbeat of your visual brand. We deliver vector-based, timeless logo concepts accompanied by comprehensive brand style guides, color palettes, and typography rules.',
+    iconName: 'Palette',
+    category: 'design',
+    features: ['3 to 5 Unique Concept Variations', 'Full Vector Files (SVG, AI, EPS, PNG, PDF)', '3D Mockup Presentations', 'Brand Style Guide Sheet', 'Unlimited Revisions Included'],
+    startingPrice: '$79',
+    deliveryTime: '2-3 Days',
+  },
+  {
+    id: 'poster-design',
+    title: 'Poster & Graphic Design',
+    shortDesc: 'Eye-catching promotional posters, flyers, banners, and social graphics designed to grab attention.',
+    fullDesc: 'High-impact visual collateral for digital campaigns, event promotions, product launches, and social media feeds engineered with conversion-focused typography and vibrant color harmony.',
+    iconName: 'Image',
+    category: 'design',
+    features: ['Print-Ready High Resolution (300 DPI)', 'Social Media Dimensions Included', 'Custom Illustration & Photo Editing', 'Source Files (PSD / AI / Figma)', 'Quick 24-48 Hour Turnaround'],
+    startingPrice: '$49',
+    deliveryTime: '1-2 Days',
+  },
+  {
+    id: 'reel-editing',
+    title: 'Information Reel Editing',
+    shortDesc: 'Engaging vertical videos, Instagram Reels, TikToks, and YouTube Shorts with motion graphics and captions.',
+    fullDesc: 'Maximize video retention with dynamic jump cuts, engaging kinetic typography, custom sound design, color grading, and trend-setting captions designed specifically for viral reach.',
+    iconName: 'Video',
+    category: 'editing',
+    features: ['Auto & Styled Animated Captions', 'Sound FX & Copyright-Free Music Track', 'Color Grading & Smooth Transitions', 'B-Roll & Overlay Enhancements', '4K / 1080p 60FPS Delivery'],
+    startingPrice: '$39',
+    deliveryTime: '1-2 Days',
+    badge: 'Trending',
+  },
+  
+  {
+    id: 'blog-writing',
+    title: 'Blog & Content Writing',
+    shortDesc: 'SEO-optimized, high-authority articles that educate readers and rank at the top of Google search results.',
+    fullDesc: 'Engaging, human-written content curated by domain experts. Every article is backed by keyword research, structured with optimal heading hierarchy, and formatted for maximum readability and search rankings.',
+    iconName: 'FileText',
+    category: 'marketing',
+    features: ['Keyword Researched & Structured', '100% Plagiarism-Free & Human Tone', 'In-Text Internal & External Links', 'Meta Title & Description Included', 'Royalty-Free Header Image'],
+    startingPrice: '$29',
+    deliveryTime: '1-2 Days',
+  },
+  {
+    id: 'seo-services',
+    title: 'SEO Services',
+    shortDesc: 'Data-driven Search Engine Optimization to drive consistent organic traffic and dominate search rankings.',
+    fullDesc: 'Comprehensive technical, on-page, and off-page SEO audits and continuous optimization strategies designed to elevate your site visibility, target lucrative search keywords, and outrank competitors.',
+    iconName: 'TrendingUp',
+    category: 'marketing',
+    features: ['Technical Site Audit & Fixes', 'Target Keyword Strategy & Mapping', 'On-Page Meta & Schema Markup', 'Speed & Core Web Vitals Optimization', 'Monthly Rank & Traffic Reports'],
+    startingPrice: '$199',
+    deliveryTime: 'Monthly Retainer',
+  },
+  {
+    id: 'profile-backlinks',
+    title: 'Profile Backlinks',
+    shortDesc: 'High-DA manual profile backlinks from authoritative platforms to build domain score & TRUST.',
+    fullDesc: 'Strengthen your website trust score with 100% white-hat, manually created profile backlinks on high Domain Authority (DA 70-90+) platforms with indexation reporting.',
+    iconName: 'Link',
+    category: 'marketing',
+    features: ['100% White-Hat Manual Submission', 'High DA/DR (70+ to 90+) Domains', 'Complete Excel Audit Report', 'Natural Anchor Text Distribution', 'Safe Search Engine Indexation'],
+    startingPrice: '$59',
+    deliveryTime: '3-5 Days',
+  },
+  {
+    id: 'social-backlinks',
+    title: 'Social Backlinks',
+    shortDesc: 'Social signals and authority bookmarks to boost search indexation speed and social validation.',
+    fullDesc: 'Amplify your site brand signals across major social networks, social bookmarking hubs, and community platforms to accelerate indexing and boost algorithmic credibility.',
+    iconName: 'Share2',
+    category: 'marketing',
+    features: ['Active Social Bookmark Submissions', 'Multi-Platform Brand Signals', 'Increases Search Crawler Visits', 'Full Transparency Excel Report', '100% Safe Penalty-Free Approach'],
+    startingPrice: '$49',
+    deliveryTime: '2-4 Days',
+  },
+];
+
+// 3. About Us
+export const aboutUsData = {
+  whoWeAre: {
+    title: 'Who We Are',
+    subtitle: 'A Passionate Team of Digital Craftsmen',
+    desc: 'Netronomic Web is a full-service creative agency dedicated to transforming brand ideas into powerful digital realities. Founded in 2018, we combine technical excellence in software engineering with artful graphic design and strategic digital marketing.',
+    bullets: [
+      'Multi-disciplinary team of developers, designers, video creators & SEO strategists',
+      'Over 450+ successful client deployments across 25+ countries',
+      'Sky Blue & White clean design ethos focused on clarity, performance, and impact',
+    ],
+  },
+  mission: {
+    title: 'Our Mission',
+    subtitle: 'Empowering Brands Through Innovation',
+    desc: 'To deliver world-class web, mobile, design, and marketing solutions that enable businesses of all sizes to scale effortlessly, engage audiences deeply, and achieve sustainable ROI.',
+    icon: 'Target',
+  },
+  vision: {
+    title: 'Our Vision',
+    subtitle: 'Leading the Future of Digital Agency Services',
+    desc: 'To be the globally trusted benchmark for digital agency craftsmanship, known for uncompromising quality, rapid execution, transparent communication, and sky-high client satisfaction.',
+    icon: 'Eye',
+  },
+};
+
+// 4. Why Choose Us (5 items)
+export const whyChooseData: WhyChooseItem[] = [
+  {
+    id: 'team',
+    title: 'Professional Team',
+    description: 'Our senior developers, UI/UX designers, and video editors possess years of hands-on industry expertise.',
+    icon: 'Users',
+    highlight: 'Senior Talent Only',
+  },
+  {
+    id: 'speed',
+    title: 'Fast Delivery',
+    description: 'Agile milestone workflows guarantee fast turnaround times without compromising on quality or testing.',
+    icon: 'Zap',
+    highlight: 'On-Time Guaranteed',
+  },
+  {
+    id: 'pricing',
+    title: 'Affordable Pricing',
+    description: 'Transparent, competitive pricing structures with zero hidden fees. Exceptional value for every budget.',
+    icon: 'DollarSign',
+    highlight: 'No Hidden Fees',
+  },
+  {
+    id: 'quality',
+    title: 'Quality Work',
+    description: 'Pixel-perfect UI design, clean maintainable code, high-resolution media assets, and robust QA testing.',
+    icon: 'Award',
+    highlight: '100% QA Tested',
+  },
+  {
+    id: 'support',
+    title: 'Customer Support',
+    description: 'Dedicated client success manager, continuous status updates, and 24/7 post-delivery assistance.',
+    icon: 'Headphones',
+    highlight: '24/7 Assistance',
+  },
+];
+
+// 5. Our Process (6 steps)
+export const processSteps: ProcessStep[] = [
+  {
+    number: '01',
+    title: 'Discuss',
+    desc: 'We conduct a deep discovery session to analyze your requirements, business objectives, target audience, and project scope.',
+    details: ['Requirements Gathering', 'Target Audience Blueprint', 'Goal & KPI Setting'],
+    icon: 'MessageSquare',
+  },
+  {
+    number: '02',
+    title: 'Plan',
+    desc: 'We architect a clear project roadmap, choosing optimal technology stacks, sitemaps, wireframes, and delivery timelines.',
+    details: ['Tech Stack Selection', 'Sitemap & Wireframing', 'Milestone Schedule'],
+    icon: 'Compass',
+  },
+  {
+    number: '03',
+    title: 'Design',
+    desc: 'Our creative team designs stunning visual mockups, UI concepts, brand color palettes, and interactive prototypes.',
+    details: ['Sky Blue & White Visual Systems', 'Figma UI/UX Mockups', 'Client Feedback Iterations'],
+    icon: 'Palette',
+  },
+  {
+    number: '04',
+    title: 'Develop',
+    desc: 'Engineers turn approved designs into clean, high-performance code, integrating APIs, databases, and responsive features.',
+    details: ['Clean Modular Codebase', 'API & Database Wiring', 'Cross-Browser Compatibility'],
+    icon: 'Code',
+  },
+  {
+    number: '05',
+    title: 'Review',
+    desc: 'Rigorously testing performance, security, SEO readiness, responsive breakpoints, and client review walk-through.',
+    details: ['Speed & Quality Audit', 'Security Checks', 'Final Client Acceptance'],
+    icon: 'CheckCircle',
+  },
+  {
+    number: '06',
+    title: 'Deliver',
+    desc: 'Deploying live to your servers, delivering source files, training your team, and launching your digital product.',
+    details: ['Live Deployment', 'Complete Source Code Release', 'Ongoing Support Handover'],
+    icon: 'Rocket',
+  },
+];
+
+// 6. Portfolio Items (Across Websites, Logos, Posters, Apps, Video Editing)
+export const PORTFOLIO_CATEGORIES = [
+  'Website Design & Development',
+  'Logo Design',
+  'Poster & Graphic Design',
+  'Information Reel Editing',
+  'Blog & Content Writing',
+  'SEO Services',
+  'Profile Backlinks',
+  'Social Backlinks'
+];
+
+export const portfolioData: PortfolioItem[] = [
+  {
+    id: 'port-1',
+    title: 'Horizon SaaS Platform',
+    category: 'Website Design & Development',
+    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+    description: 'Modern sky blue analytics dashboard featuring real-time data visualization and lightning fast React interface.',
+    detailedDescription: 'We built a complete analytics suite from the ground up, focusing on a robust frontend architecture and optimized real-time data flow.',
+    tags: ['React', 'Tailwind CSS', 'Node.js', 'Dashboard'],
+    technologies: ['React', 'Tailwind', 'Node.js', 'PostgreSQL'],
+    client: 'Horizon Tech Inc.',
+    stats: '240% Conversion Increase',
+    featured: true,
+  },
+  {
+    id: 'port-2',
+    title: 'Aura Minimalist Branding',
+    category: 'Logo Design',
+    image: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80',
+    description: 'Geometric emblem and brand identity suite for a high-end eco-lifestyle brand.',
+    detailedDescription: 'Created a unique geometric logo prioritizing scalability across print and digital mediums while conveying an eco-conscious philosophy.',
+    tags: ['Logo Design', 'Vector', 'Branding Guide'],
+    client: 'Aura Studio',
+    stats: 'Brand Identity Award 2024',
+    featured: true,
+  },
+  {
+    id: 'port-4',
+    title: 'Tech Summit Event Poster',
+    category: 'Poster & Graphic Design',
+    image: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=800&q=80',
+    description: 'High-contrast promotional poster series designed for an international developer conference.',
+    tags: ['Print & Digital', '300 DPI', 'Photoshop'],
+    client: 'Global Tech Con',
+    featured: true,
+  },
+  {
+    id: 'port-5',
+    title: 'Viral AI Tech Reel Series',
+    category: 'Information Reel Editing',
+    image: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80',
+    description: 'High-retention short-form video series explaining AI concepts with custom motion graphics.',
+    tags: ['Premiere Pro', 'After Effects', 'Captioning'],
+    client: 'TechTok Media',
+    stats: '1.2M+ Views',
+    featured: true,
+  },
+  {
+    id: 'port-7',
+    title: 'B2B Authority Content Strategy',
+    category: 'Blog & Content Writing',
+    image: 'https://images.unsplash.com/photo-1455390582262-044cdead27d8?auto=format&fit=crop&w=800&q=80',
+    description: 'Comprehensive blog writing and content strategy establishing thought leadership in the FinTech space.',
+    tags: ['Content Strategy', 'Copywriting', 'B2B'],
+    client: 'FinServe Solutions',
+    featured: false,
+  },
+  {
+    id: 'port-6',
+    title: 'E-Commerce SEO Overhaul',
+    category: 'SEO Services',
+    image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&w=800&q=80',
+    description: 'Complete technical and on-page SEO optimization for a major online retailer.',
+    tags: ['Technical SEO', 'Keyword Strategy', 'Content Optimization'],
+    client: 'StyleStore Online',
+    stats: '315% Organic Traffic Growth',
+    featured: true,
+  },
+  {
+    id: 'port-8',
+    title: 'High-DA Profile Building',
+    category: 'Profile Backlinks',
+    image: 'https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&w=800&q=80',
+    description: 'Strategic placement of authoritative profile backlinks to build domain authority and trust.',
+    tags: ['Off-Page SEO', 'Link Building', 'Authority Profiles'],
+    client: 'Startup Hub',
+    featured: false,
+  },
+  {
+    id: 'port-9',
+    title: 'Social Signal Amplification',
+    category: 'Social Backlinks',
+    image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80',
+    description: 'Generated authentic social signals across platforms to accelerate content indexing and visibility.',
+    tags: ['Social Signals', 'Link Building', 'Brand Awareness'],
+    client: 'Local Services Inc',
+    featured: false,
+  }
+];
+
+// 7. Pricing (3 Tiers)
+export const pricingData: PricingPlan[] = [
+  {
+    id: 'basic',
+    name: 'Basic Starter',
+    priceMonthly: 199,
+    priceOneTime: 299,
+    description: 'Ideal for small businesses & startups launching their initial online presence.',
+    features: [
+      'Responsive 3-5 Page Website',
+      '1 Professional Logo Concept',
+      'Basic On-Page SEO Setup',
+      'Contact Form & WhatsApp Integration',
+      '2 Social Media Posters',
+      '1 Week Free Support',
+    ],
+    notIncluded: ['Reel Video Editing', 'High DA Backlinks'],
+  },
+  {
+    id: 'standard',
+    name: 'Growth Professional',
+    badge: 'Best Value',
+    popular: true,
+    priceMonthly: 499,
+    priceOneTime: 699,
+    description: 'Comprehensive package for growing brands looking to dominate search and social media.',
+    features: [
+      'Custom React/Next Website (Up to 10 pages)',
+      '3 Logo Variations & Brand Style Guide',
+      '5 Eye-Catching Social Media Posters',
+      '3 Edited Reels with Kinetic Captions',
+      'Full SEO Audit & Keyword Optimization',
+      '30 Manual Profile Backlinks',
+      '3 Blog Articles (1,200 words each)',
+      '1 Month Dedicated Support',
+    ],
+  },
+  {
+    id: 'premium',
+    name: 'Enterprise Scale',
+    priceMonthly: 999,
+    priceOneTime: 1499,
+    description: 'All-inclusive solution for businesses needing custom web dev, high PR backlinks, and full media production.',
+    features: [
+            'Unlimited Logo Revisions + Complete Branding Kit',
+      '10 Custom Posters & Banners',
+      '8 High-Impact Reels / Video Edits',
+      'Complete SEO Suite (On-page + Technical)',
+      '100 High DA Profile & Social Backlinks',
+      '8 Optimized SEO Blog Posts',
+      'Priority 24/7 VIP Support',
+    ],
+  },
+];
+
+// 8. Testimonials
+export const testimonialsData: Testimonial[] = [
+  {
+    id: 'test-1',
+    name: 'Sarah Jenkins',
+    role: 'CEO & Founder',
+    company: 'Luminary Tech',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
+    rating: 5,
+    comment: 'Netronomic Web redesigned our entire web application and created stunning promotional reels. Our website traffic doubled in under 30 days and clients love the fresh sky blue aesthetic!',
+    serviceUsed: 'Website Design & Reel Editing',
+  },
+  {
+    id: 'test-2',
+    name: 'Rajesh Sharma',
+    role: 'Marketing Director',
+    company: 'FinEdge Solutions',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
+    rating: 5,
+    comment: 'Their SEO services and profile backlinks propelled our brand to the top 3 spots on Google for key industry terms. Truly professional team with fast delivery!',
+    serviceUsed: 'SEO Services & Profile Backlinks',
+  },
+  {
+    id: 'test-3',
+    name: 'Elena Rostova',
+    role: 'Creative Director',
+    company: 'Vogue Essentials',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    rating: 5,
+    comment: 'The logo design and poster collateral were beyond expectations. The vector files were flawless, and the turnaround time was remarkably quick.',
+    serviceUsed: 'Logo & Poster Design',
+  },
+];
+
+// 9. FAQ
+export const faqData: FAQItem[] = [
+  {
+    id: 'faq-1',
+    category: 'General',
+    question: 'How do we get started with a project?',
+    answer: 'Simply click "Get Started" or message us on WhatsApp with your project details. We schedule a brief discovery chat, provide a custom proposal, and initiate design/development upon agreement.',
+  },
+  {
+    id: 'faq-2',
+    category: 'Services',
+    question: 'What is included in the Website Design & Development package?',
+    answer: 'Our website packages include responsive design, clean code, speed optimization, contact forms, social media integration, basic SEO, and complete source files hosted on your domain.',
+  },
+  {
+    id: 'faq-3',
+    category: 'SEO & Backlinks',
+    question: 'Are your profile and social backlinks safe for Google?',
+    answer: 'Yes! We use 100% white-hat manual submission strategies on high Domain Authority (DA 70+) platforms. We provide detailed Excel reports with live URL verification.',
+  },
+  {
+    id: 'faq-4',
+    category: 'Reel Editing',
+    question: 'What format do I need to send for Information Reel Editing?',
+    answer: 'You can upload raw vertical clips or audio recordings via Google Drive, Dropbox, or WhatsApp. We take care of transcriptions, kinetic captions, overlays, music, and final 4K rendering.',
+  },
+  {
+    id: 'faq-5',
+    category: 'Turnaround',
+    question: 'How fast can you deliver a project?',
+    answer: 'Small design tasks (Logos, Posters, Reels, Blog Posts) are delivered in 24 to 48 hours. Websites and mobile applications take between 5 days to 3 weeks depending on complexity.',
+  },
+  {
+    id: 'faq-6',
+    category: 'Revisions',
+    question: 'What if I need changes after delivery?',
+    answer: 'We offer unlimited revisions during the review stage until you are 100% satisfied. Post-delivery, all packages come with free support.',
+  },
+];
+
+

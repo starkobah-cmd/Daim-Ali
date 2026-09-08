@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      // Prevent "Cannot set property fetch of #<Window> which has only a getter" error
+      // by intercepting attempts to overwrite window.fetch.
+      try {
+        const originalFetch = window.fetch;
+        Object.defineProperty(window, 'fetch', {
+          get: function() { return originalFetch; },
+          set: function(val) { 
+            console.warn('Silently ignored attempt to overwrite window.fetch'); 
+          },
+          configurable: true
+        });
+      } catch (e) {}
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Netronomic Web | Digital Agency & Web Solutions</title>
+    <meta name="description" content="Netronomic Web is a digital agency offering professional web design, development, SEO, branding, and digital marketing solutions for growing businesses." />
+    <meta property="og:title" content="Netronomic Web | Digital Agency & Web Solutions" />
+    <meta property="og:description" content="Netronomic Web is a digital agency offering professional web design, development, SEO, branding, and digital marketing solutions for growing businesses." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Netronomic Web | Digital Agency & Web Solutions" />
+    <meta name="twitter:description" content="Netronomic Web is a digital agency offering professional web design, development, SEO, branding, and digital marketing solutions for growing businesses." />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

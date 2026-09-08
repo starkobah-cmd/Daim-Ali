@@ -1,0 +1,6 @@
+{
+  "name": "Netronomic Web",
+  "description": "Netronomic Web is a digital agency offering professional web design, development, SEO, branding, and digital marketing solutions for growing businesses.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
