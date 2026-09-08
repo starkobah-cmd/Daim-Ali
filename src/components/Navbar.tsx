@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Phone, MessageSquare, Menu, X, ArrowUpRight, BookOpen } from 'lucide-react';
+import { Sparkles, Phone, MessageSquare, Menu, X, ArrowUpRight, BookOpen, Lock } from 'lucide-react';
 import { BlogViewMode } from '../types';
 import { Logo } from './Logo';
 import { SiteConfig } from '../data/siteConfig';
@@ -216,6 +216,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
             >
               Get Started / Contact Us
             </button>
+
+            {onNavigate && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onNavigate('site-admin');
+                }}
+                className="w-full text-center text-xs font-medium py-2 rounded-lg text-slate-500 hover:text-sky-600 hover:bg-slate-50 flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Lock className="w-3.5 h-3.5 text-sky-500" />
+                <span>Admin CMS Portal</span>
+              </button>
+            )}
           </div>
         </div>
       )}

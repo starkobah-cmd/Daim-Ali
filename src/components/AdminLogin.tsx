@@ -329,12 +329,12 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                 )}
               </button>
 
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400 flex items-start gap-2">
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400 flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
                   <p className="text-slate-300 font-semibold">Protected Administration</p>
-                  <p>
-                    Default Login: <code className="text-sky-300 font-mono bg-sky-950/60 px-1 py-0.5 rounded border border-sky-800/40">admin</code> &bull; Password: <code className="text-sky-300 font-mono bg-sky-950/60 px-1 py-0.5 rounded border border-sky-800/40">Admin@786</code>
+                  <p className="text-slate-400 text-[11px]">
+                    Authorized credentials required. Unauthorized access attempts are monitored and logged.
                   </p>
                 </div>
               </div>

@@ -152,9 +152,10 @@ export default function App() {
         if (hash === '#admin') {
           window.history.replaceState(null, '', '/admin');
         }
-        setIsAdminAuthenticated(isAuthenticatedAdmin());
+        const isAuth = isAuthenticatedAdmin();
+        setIsAdminAuthenticated(isAuth);
         setBlogView('site-admin');
-        setIsAdminDashboardLoading(true);
+        setIsAdminDashboardLoading(isAuth);
       }
     };
 
@@ -171,8 +172,9 @@ export default function App() {
     setBlogView(view);
     if (view === 'site-admin' || view === 'blog-admin') {
       window.history.pushState(null, '', '/admin');
-      setIsAdminAuthenticated(isAuthenticatedAdmin());
-      setIsAdminDashboardLoading(true);
+      const isAuth = isAuthenticatedAdmin();
+      setIsAdminAuthenticated(isAuth);
+      setIsAdminDashboardLoading(isAuth);
     } else {
       if (window.location.pathname.toLowerCase() === '/admin' || window.location.pathname.toLowerCase() === '/dashboard' || window.location.hash === '#admin') {
         window.history.pushState(null, '', '/');

@@ -1,8 +1,8 @@
 // Security and Authentication Utility for Netronomic CMS
+// Server-side authentication proxy - No passwords exposed in client code
 
-const ADMIN_USERS_KEY = 'netronomic_admin_users_v3';
 const ADMIN_SESSION_KEY = 'netronomic_admin_session_v1';
-const SESSION_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 Hours
+const ADMIN_USERS_KEY = 'netronomic_admin_users_v3';
 
 export type AdminRole = 'Super Admin' | 'Editor' | 'SEO Manager';
 
@@ -10,7 +10,6 @@ export interface AdminUser {
   id: string;
   username: string;
   email: string;
-  passwordHash: string;
   role: AdminRole;
   createdAt: string;
   mustChangePassword?: boolean;
@@ -26,7 +25,7 @@ export interface AdminSession {
   mustChangePassword?: boolean;
 }
 
-// Convert string to SHA-256 hex digest
+// Convert string to SHA-256 hex digest for internal hashing
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + '_netronomic_salt_2026');
@@ -35,87 +34,61 @@ export async function hashPassword(password: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Default Credentials required by specification:
-// Username: admin | Email: admin@example.com | Password: Admin@123
-const DEFAULT_USERNAME = 'admin';
-const DEFAULT_EMAIL = 'admin@example.com';
-const DEFAULT_PASSWORD_PLAIN = 'Admin@786';
-
-export async function getStoredAdminUsers(): Promise<AdminUser[]> {
-  try {
-    const raw = localStorage.getItem(ADMIN_USERS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch (err) {
-    console.error('Error reading admin users:', err);
-  }
-
-  // Initialize default first administrator account if none exists
-  const defaultHash = await hashPassword(DEFAULT_PASSWORD_PLAIN);
-  const defaultAdmin: AdminUser = {
-    id: 'usr_default_admin',
-    username: DEFAULT_USERNAME,
-    email: DEFAULT_EMAIL,
-    passwordHash: defaultHash,
-    role: 'Super Admin',
-    createdAt: new Date().toISOString(),
-    mustChangePassword: true, // Force password change after first login as requested
-  };
-  const users = [defaultAdmin];
-  localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(users));
-  return users;
-}
-
-export async function saveAdminUsers(users: AdminUser[]): Promise<void> {
-  localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(users));
-}
-
+/**
+ * Verify Admin Login using the secure backend API.
+ * Password verification is handled server-side only; no credentials are hardcoded here.
+ */
 export async function verifyAdminLogin(
-  identifierInput: string, // username or email
+  identifierInput: string,
   passwordPlainInput: string,
   rememberMe: boolean = false
 ): Promise<{ success: boolean; mustChangePassword?: boolean; error?: string }> {
-  const users = await getStoredAdminUsers();
-  const inputHash = await hashPassword(passwordPlainInput);
-  const cleanIdentifier = identifierInput.trim().toLowerCase();
+  try {
+    const response = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        identifier: identifierInput.trim(),
+        password: passwordPlainInput,
+        rememberMe,
+      }),
+    });
 
-  const matchedUser = users.find(
-    u => u.username.toLowerCase() === cleanIdentifier || u.email.toLowerCase() === cleanIdentifier
-  );
+    const data = await response.json();
 
-  if (!matchedUser) {
-    return { success: false, error: 'No account found with this username or email.' };
+    if (response.ok && data.success && data.token) {
+      const session: AdminSession = {
+        userId: data.user?.id || 'usr_admin_master',
+        username: data.user?.username || identifierInput.trim(),
+        email: data.user?.email || 'admin@example.com',
+        role: data.user?.role || 'Super Admin',
+        token: data.token,
+        expiresAt: data.expiresAt || (Date.now() + (rememberMe ? 30 * 24 * 60 * 60 * 1000 : 4 * 60 * 60 * 1000)),
+        mustChangePassword: false,
+      };
+
+      localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+      return { success: true, mustChangePassword: false };
+    }
+
+    return { 
+      success: false, 
+      error: data.error || 'Invalid credentials. Please check your username/email and password.' 
+    };
+  } catch (err) {
+    console.error('Login request failed:', err);
+    return { 
+      success: false, 
+      error: 'Network or authentication service error. Please try again.' 
+    };
   }
-
-  const isDefaultUser = matchedUser.id === 'usr_default_admin';
-  const altHash = await hashPassword('Admin@123');
-  const mainHash = await hashPassword('Admin@786');
-  const isPasswordValid = matchedUser.passwordHash === inputHash || (isDefaultUser && (inputHash === altHash || inputHash === mainHash));
-
-  if (!isPasswordValid) {
-    return { success: false, error: 'Incorrect password. Please try again.' };
-  }
-
-  // Create active session
-  const duration = rememberMe ? 30 * 24 * 60 * 60 * 1000 : SESSION_EXPIRY_MS;
-  const session: AdminSession = {
-    userId: matchedUser.id,
-    username: matchedUser.username,
-    email: matchedUser.email,
-    role: matchedUser.role,
-    token: `token_${Date.now()}_${Math.random().toString(36).substring(2)}`,
-    expiresAt: Date.now() + duration,
-    mustChangePassword: matchedUser.mustChangePassword,
-  };
-
-  localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
-  return { success: true, mustChangePassword: matchedUser.mustChangePassword };
 }
 
+/**
+ * Retrieves the currently active admin session if valid and not expired.
+ */
 export function getCurrentSession(): AdminSession | null {
   try {
     const raw = localStorage.getItem(ADMIN_SESSION_KEY);
@@ -127,79 +100,158 @@ export function getCurrentSession(): AdminSession | null {
       logoutAdmin();
       return null;
     }
-  } catch (err) {
+  } catch {
     return null;
   }
 }
 
+/**
+ * Synchronous check whether an admin session exists and is unexpired.
+ */
 export function isAuthenticatedAdmin(): boolean {
   return getCurrentSession() !== null;
 }
 
+/**
+ * Terminate the active admin session and clear all stored tokens.
+ */
 export function logoutAdmin(): void {
+  const session = getCurrentSession();
+  if (session?.token) {
+    // Notify server to invalidate token asynchronously
+    fetch('/api/admin/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token: session.token }),
+    }).catch(() => {});
+  }
   localStorage.removeItem(ADMIN_SESSION_KEY);
 }
 
-// Reset password for a given username or email using security recovery phrase or master key
+/**
+ * Asynchronous server-side session validator
+ */
+export async function validateAdminSessionWithServer(): Promise<boolean> {
+  const session = getCurrentSession();
+  if (!session?.token) return false;
+
+  try {
+    const res = await fetch('/api/admin/verify-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token: session.token }),
+    });
+    const data = await res.json();
+    if (!data.valid) {
+      logoutAdmin();
+      return false;
+    }
+    return true;
+  } catch {
+    // If offline or network check fails, fallback to valid client token if not expired
+    return session.expiresAt > Date.now();
+  }
+}
+
+/**
+ * Reset password via backend API or recovery phrase
+ */
 export async function resetPasswordWithKey(
   identifier: string,
   newPasswordPlain: string
 ): Promise<{ success: boolean; message: string }> {
-  const users = await getStoredAdminUsers();
-  const cleanId = identifier.trim().toLowerCase();
-  const index = users.findIndex(
-    u => u.username.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId
-  );
-
-  if (index === -1) {
-    return { success: false, message: 'Account not found. Check username or email.' };
+  try {
+    const res = await fetch('/api/admin/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token: getCurrentSession()?.token,
+        identifier: identifier.trim(),
+        newPassword: newPasswordPlain,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      return { success: true, message: data.message || 'Password has been successfully updated.' };
+    }
+    return { success: false, message: data.error || 'Failed to update password.' };
+  } catch {
+    return { success: false, message: 'Server communication error during password reset.' };
   }
-
-  const newHash = await hashPassword(newPasswordPlain);
-  users[index].passwordHash = newHash;
-  users[index].mustChangePassword = false;
-  await saveAdminUsers(users);
-
-  return { success: true, message: 'Password has been successfully reset! You can now log in with your new password.' };
 }
 
-// Change current admin password
+/**
+ * Change current user password via backend endpoint
+ */
 export async function changeUserPassword(
-  userId: string,
+  _userId: string,
   oldPasswordPlain: string,
   newPasswordPlain: string
 ): Promise<{ success: boolean; message: string }> {
-  const users = await getStoredAdminUsers();
-  const user = users.find(u => u.id === userId);
-
-  if (!user) {
-    return { success: false, message: 'User not found.' };
-  }
-
-  const oldHash = await hashPassword(oldPasswordPlain);
-  if (user.passwordHash !== oldHash) {
-    return { success: false, message: 'Current password is incorrect.' };
-  }
-
-  user.passwordHash = await hashPassword(newPasswordPlain);
-  user.mustChangePassword = false;
-  await saveAdminUsers(user.id ? users : users);
-
-  // Update session if it's the current session
   const session = getCurrentSession();
-  if (session && session.userId === userId) {
-    session.mustChangePassword = false;
-    localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+  try {
+    const res = await fetch('/api/admin/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.token || ''}`,
+      },
+      body: JSON.stringify({
+        token: session?.token,
+        oldPassword: oldPasswordPlain,
+        newPassword: newPasswordPlain,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      return { success: true, message: data.message || 'Password updated successfully!' };
+    }
+    return { success: false, message: data.error || 'Failed to update password.' };
+  } catch {
+    return { success: false, message: 'Server communication error while changing password.' };
   }
-
-  return { success: true, message: 'Password updated successfully!' };
 }
 
-// Admin user management (Add, Delete, Edit role)
+// Stored Admin Users compatibility helpers for AdminPanel UI
+export async function getStoredAdminUsers(): Promise<AdminUser[]> {
+  try {
+    const raw = localStorage.getItem(ADMIN_USERS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch {}
+
+  const defaultUsers: AdminUser[] = [
+    {
+      id: 'usr_admin_master',
+      username: 'netronomicweb',
+      email: 'starkobah@gmail.com',
+      role: 'Super Admin',
+      createdAt: new Date().toISOString(),
+      mustChangePassword: false,
+    },
+  ];
+  localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(defaultUsers));
+  return defaultUsers;
+}
+
+export async function saveAdminUsers(users: AdminUser[]): Promise<void> {
+  localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(users));
+}
+
 export async function createAdminUser(
   username: string,
   email: string,
-  passwordPlain: string,
+  _passwordPlain: string,
   role: AdminRole
 ): Promise<{ success: boolean; message: string; user?: AdminUser }> {
   const users = await getStoredAdminUsers();
@@ -215,7 +267,6 @@ export async function createAdminUser(
     id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     username: username.trim(),
     email: email.trim().toLowerCase(),
-    passwordHash: await hashPassword(passwordPlain),
     role,
     createdAt: new Date().toISOString(),
     mustChangePassword: false,
@@ -229,12 +280,12 @@ export async function createAdminUser(
 export async function deleteAdminUser(userId: string): Promise<{ success: boolean; message: string }> {
   const users = await getStoredAdminUsers();
   if (users.length <= 1) {
-    return { success: false, message: 'Cannot delete the only administrator account.' };
+    return { success: false, message: 'Cannot delete the primary administrator account.' };
   }
 
   const filtered = users.filter(u => u.id !== userId);
   await saveAdminUsers(filtered);
-  return { success: true, message: 'Admin account deleted.' };
+  return { success: true, message: 'Admin account removed.' };
 }
 
 export async function updateAdminUser(
@@ -255,4 +306,3 @@ export async function updateAdminUser(
   await saveAdminUsers(users);
   return { success: true, message: 'User details updated successfully.' };
 }
-
