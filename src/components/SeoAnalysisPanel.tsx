@@ -15,7 +15,8 @@ import {
   BarChart3,
   Lightbulb,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Code
 } from 'lucide-react';
 import { analyzeSeo, SeoCheckItem } from '../utils/seoAnalyzer';
 
@@ -30,6 +31,8 @@ interface SeoAnalysisPanelProps {
   onSlugChange: (val: string) => void;
   ogImage?: string;
   onOgImageChange?: (val: string) => void;
+  customSchema?: string;
+  onCustomSchemaChange?: (val: string) => void;
   content: string;
   entityType?: 'blog' | 'page';
   entityName?: string;
@@ -47,6 +50,8 @@ export const SeoAnalysisPanel: React.FC<SeoAnalysisPanelProps> = ({
   onSlugChange,
   ogImage = '',
   onOgImageChange,
+  customSchema: customSchemaProp = '',
+  onCustomSchemaChange,
   content,
   entityType = 'blog',
   entityName,
@@ -55,6 +60,13 @@ export const SeoAnalysisPanel: React.FC<SeoAnalysisPanelProps> = ({
   const [activeCategory, setActiveCategory] = React.useState<'all' | 'basic' | 'title' | 'content'>('all');
   const [previewDevice, setPreviewDevice] = React.useState<'desktop' | 'mobile'>('desktop');
   const [showTips, setShowTips] = React.useState<boolean>(true);
+  const [customSchema, setCustomSchema] = React.useState<string>(customSchemaProp);
+
+  useEffect(() => {
+    if (customSchemaProp !== undefined) {
+      setCustomSchema(customSchemaProp);
+    }
+  }, [customSchemaProp]);
 
   // Run real-time RankMath-style SEO analysis
   const analysis = useMemo(() => {
@@ -345,6 +357,23 @@ export const SeoAnalysisPanel: React.FC<SeoAnalysisPanelProps> = ({
                 className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:border-sky-500 placeholder:text-slate-600"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1">
+              <Code className="w-3.5 h-3.5 text-sky-400" />
+              <span>Custom Schema.org Code (JSON-LD)</span>
+            </label>
+            <textarea
+              rows={4}
+              value={customSchema}
+              onChange={(e) => {
+                setCustomSchema(e.target.value);
+                if (onCustomSchemaChange) onCustomSchemaChange(e.target.value);
+              }}
+              placeholder='<script type="application/ld+json">&#10;{&#10;  "@context": "https://schema.org"&#10;}&#10;</script>'
+              className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:border-sky-500 placeholder:text-slate-600"
+            />
           </div>
         </div>
 

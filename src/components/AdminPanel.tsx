@@ -49,7 +49,8 @@ import {
   Type,
   Lock,
   KeyRound,
-  UserPlus
+  UserPlus,
+  LogOut
 } from 'lucide-react';
 import {
   SiteConfig,
@@ -90,6 +91,7 @@ interface AdminPanelProps {
   onDeletePost: (postId: string) => void;
   onToggleStatus: (postId: string, status: PostStatus) => void;
   onExitAdmin: () => void;
+  onLogout?: () => void;
   onOpenSitemap: () => void;
 }
 
@@ -122,6 +124,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onDeletePost,
   onToggleStatus,
   onExitAdmin,
+  onLogout,
   onOpenSitemap,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
@@ -701,6 +704,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Exit to Website</span>
           </button>
+
+          <button
+            onClick={() => {
+              logoutAdmin();
+              if (onLogout) {
+                onLogout();
+              } else {
+                onExitAdmin();
+              }
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 font-bold text-xs border border-rose-500/30 transition-all cursor-pointer"
+            title="Log out and lock Admin Panel"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
         </div>
       </header>
 
@@ -1012,6 +1031,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     onSlugChange={(val) => handleUpdatePageSeoField(selectedPage.id, 'slug', val)}
                     ogImage={selectedPage.ogImage || localConfig.seo?.defaultOgImage || ''}
                     onOgImageChange={(val) => handleUpdatePageSeoField(selectedPage.id, 'ogImage', val)}
+                    customSchema={selectedPage.customSchema || ''}
+                    onCustomSchemaChange={(val) => handleUpdatePageSeoField(selectedPage.id, 'customSchema', val)}
                     content={`${selectedPage.title}\n\n${selectedPage.metaTitle}\n\n${selectedPage.metaDescription}\n\n${selectedPage.sections?.map(s => `${s.name}. ${s.title}. ${s.subtitle}. ${s.badge || ''} ${s.ctaText || ''}`).join('\n\n')}`}
                     entityType="page"
                     entityName={selectedPage.title}
@@ -2779,6 +2800,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       onSlugChange={(val) => setEditingPost({ ...editingPost, slug: val })}
                       ogImage={editingPost.ogImage || editingPost.featuredImage || ''}
                       onOgImageChange={(val) => setEditingPost({ ...editingPost, ogImage: val })}
+                      customSchema={editingPost.customSchema || ''}
+                      onCustomSchemaChange={(val) => setEditingPost({ ...editingPost, customSchema: val })}
                       content={editingPost.content || ''}
                       entityType="blog"
                       entityName={editingPost.title || 'Untitled Post'}

@@ -84,14 +84,15 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ siteConfig, service,
             </button>
 
             <a
-              href={(activeAgency.whatsappNumber?.startsWith('http') ? activeAgency.whatsappNumber : `https://wa.me/${activeAgency.whatsappNumber || '923020487103'}`)}
+              href="https://wa.me/923020487103"
               target="_blank"
               rel="noopener noreferrer"
               className="whatsapp-shine-btn w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-              title="Message Netronomic web on WhatsApp"
+              title="Message Netronomic Web on WhatsApp"
+              aria-label="Message Netronomic Web on WhatsApp"
             >
               <MessageSquare className="w-4 h-4" />
-              <span>Message on WhatsApp</span>
+              <span>Message Netronomic Web on WhatsApp</span>
             </a>
           </div>
 

@@ -71,6 +71,7 @@ export interface SitePageConfig {
   focusKeyword: string;
   secondaryKeywords: string;
   ogImage?: string;
+  customSchema?: string;
   seoScore?: number;
   noIndex: boolean;
   sections: PageSectionConfig[];
@@ -139,10 +140,10 @@ export const DEFAULT_SITE_PAGES: SitePageConfig[] = [
     title: 'Home Page',
     slug: '/',
     status: 'published',
-    metaTitle: 'Netronomic Web – Creative Digital Agency',
-    metaDescription: 'Netronomic Web is a full-service creative agency dedicated to transforming brand ideas into powerful digital realities. We provide professional web design, graphic design, branding, SEO, and digital marketing services.',
-    focusKeyword: 'Web Agency',
-    secondaryKeywords: 'Mobile Apps, SEO Backlinks, Logo Design, Video Reels',
+    metaTitle: 'Netronomic Web – Creative Digital Agency | Web Design, SEO & Digital Solutions',
+    metaDescription: 'Netronomic Web is a creative digital agency offering professional web design, development, SEO, branding, and digital solutions to help businesses grow online.',
+    focusKeyword: 'creative digital agency',
+    secondaryKeywords: 'Netronomic Web, web design agency, website development, SEO services, digital marketing, branding services, professional web design, web development services, digital solutions',
     noIndex: false,
     sections: DEFAULT_PAGE_SECTIONS,
   },
@@ -235,8 +236,8 @@ export const DEFAULT_INQUIRIES: InquiryItem[] = [
 export const DEFAULT_SEO_CONFIG: SiteSeoConfig = {
   canonicalUrl: 'https://netronomic.com',
   googleSiteVerification: '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM',
-  defaultOgTitle: 'Netronomic Web Agency — Digital Growth Engine',
-  defaultOgDescription: 'Full-service web development, mobile apps, branding, video editing, and high-DA SEO backlinks.',
+  defaultOgTitle: 'Netronomic Web – Creative Digital Agency | Web Design, SEO & Digital Solutions',
+  defaultOgDescription: 'Netronomic Web is a creative digital agency offering professional web design, development, SEO, branding, and digital solutions to help businesses grow online.',
   defaultOgImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
   twitterCardType: 'summary_large_image',
   globalNoIndex: false,
@@ -312,6 +313,15 @@ export function getStoredSiteConfig(): SiteConfig {
     } else {
       services = servicesData;
     }
+    const pages = parsed.pages || DEFAULT_SITE_PAGES;
+    const homePage = Array.isArray(pages) ? pages.find((p: any) => p.slug === '/') : null;
+    if (homePage && (homePage.metaTitle === 'Netronomic Web – Creative Digital Agency' || homePage.metaTitle === 'Netronomic Web Agency — High-Converting Web & SEO')) {
+      homePage.metaTitle = 'Netronomic Web – Creative Digital Agency | Web Design, SEO & Digital Solutions';
+      homePage.metaDescription = 'Netronomic Web is a creative digital agency offering professional web design, development, SEO, branding, and digital solutions to help businesses grow online.';
+      homePage.focusKeyword = 'creative digital agency';
+      homePage.secondaryKeywords = 'Netronomic Web, web design agency, website development, SEO services, digital marketing, branding services, professional web design, web development services, digital solutions';
+    }
+
     return {
       ...DEFAULT_SITE_CONFIG,
       ...parsed,
@@ -320,7 +330,7 @@ export function getStoredSiteConfig(): SiteConfig {
       agency,
       services,
       seo: { ...DEFAULT_SITE_CONFIG.seo, ...(parsed.seo || {}) },
-      pages: parsed.pages || DEFAULT_SITE_PAGES,
+      pages,
       inquiries: parsed.inquiries || DEFAULT_INQUIRIES,
     };
   } catch (err) {

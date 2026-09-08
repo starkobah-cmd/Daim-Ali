@@ -67,14 +67,15 @@ export const QuickQuoteModal: React.FC<QuickQuoteModalProps> = ({
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <a
-                  href={siteConfig?.agency?.whatsappNumber?.startsWith('http') ? siteConfig?.agency?.whatsappNumber : `https://wa.me/${siteConfig?.agency?.whatsappNumber || '923020487103'}`}
+                  href="https://wa.me/923020487103"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="whatsapp-shine-btn w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
-                  title="Message Netronomic web on WhatsApp"
+                  title="Message Netronomic Web on WhatsApp"
+                  aria-label="Message Netronomic Web on WhatsApp"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Message Netronomic web on WhatsApp</span>
+                  <span>Message Netronomic Web on WhatsApp</span>
                 </a>
                 <button
                   onClick={onClose}
@@ -169,14 +170,15 @@ export const QuickQuoteModal: React.FC<QuickQuoteModalProps> = ({
               </div>
 
               <a
-                href={siteConfig?.agency?.whatsappNumber?.startsWith('http') ? siteConfig?.agency?.whatsappNumber : `https://wa.me/${siteConfig?.agency?.whatsappNumber || '923020487103'}`}
+                href="https://wa.me/923020487103"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="whatsapp-shine-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-                title="Message Netronomic web on WhatsApp"
+                title="Message Netronomic Web on WhatsApp"
+                aria-label="Message Netronomic Web on WhatsApp"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span>Message Netronomic web on WhatsApp</span>
+                <span>Message Netronomic Web on WhatsApp</span>
               </a>
             </form>
           )}

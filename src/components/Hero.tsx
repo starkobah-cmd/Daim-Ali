@@ -254,11 +254,12 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
 
                 {/* Bottom WhatsApp bar */}
                 <a
-                  href={(activeAgency.whatsappNumber?.startsWith('http') ? activeAgency.whatsappNumber : `https://wa.me/${activeAgency.whatsappNumber || '923020487103'}`)}
+                  href="https://wa.me/923020487103"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="whatsapp-shine-btn flex items-center justify-between p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 hover:border-emerald-300 transition-all group cursor-pointer shadow-sm"
-                  title="Message Netronomic web on WhatsApp"
+                  title="Message Netronomic Web on WhatsApp"
+                  aria-label="Message Netronomic Web on WhatsApp"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm shadow-xs group-hover:scale-105 transition-transform">
@@ -266,7 +267,7 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
                     </div>
                     <div>
                       <p className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                        <span>Message Netronomic web on WhatsApp</span>
+                        <span>Message Netronomic Web on WhatsApp</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                       </p>
                       <p className="text-[11px] text-emerald-700 font-mono">https://wa.me/923020487103</p>

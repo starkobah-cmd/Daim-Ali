@@ -1,6 +1,6 @@
 {
   "name": "Netronomic Web",
-  "description": "Netronomic Web is a full-service creative agency dedicated to transforming brand ideas into powerful digital realities. We provide professional web design, graphic design, branding, SEO, and digital marketing services.",
+  "description": "Netronomic Web is a creative digital agency offering professional web design, development, SEO, branding, and digital solutions to help businesses grow online.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

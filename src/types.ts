@@ -124,6 +124,7 @@ export interface BlogPost {
   metaDescription?: string;
   canonicalUrl?: string;
   ogImage?: string;
+  customSchema?: string;
   seoScore?: number;
   comments: BlogComment[];
 }

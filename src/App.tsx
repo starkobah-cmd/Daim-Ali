@@ -27,6 +27,7 @@ import { BlogListing } from './components/BlogListing';
 import { SingleBlog } from './components/SingleBlog';
 import { AdminBlogManagement } from './components/AdminBlogManagement';
 import { AdminPanel } from './components/AdminPanel';
+import { AdminLogin } from './components/AdminLogin';
 import { AdminDashboardLoader } from './components/AdminDashboardLoader';
 import { SitemapModal } from './components/SitemapModal';
 import { SiteLoader } from './components/SiteLoader';
@@ -39,6 +40,7 @@ import { getStoredSiteConfig, saveSiteConfigToStorage, DEFAULT_SITE_CONFIG, Site
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import { applyHeadMeta } from './utils/metaTags';
+import { isAuthenticatedAdmin, logoutAdmin } from './utils/auth';
 
 export default function App() {
 
@@ -110,21 +112,26 @@ export default function App() {
   const [posts, setPosts] = useState<BlogPost[]>(() => getStoredBlogPosts());
   const [sitemapOpen, setSitemapOpen] = useState<boolean>(false);
   const [isAdminDashboardLoading, setIsAdminDashboardLoading] = useState<boolean>(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAuthenticatedAdmin());
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(() => !sessionStorage.getItem('netronomic_loaded_once'));
 
   // Handle URL hash / path routes (e.g. /admin, /dashboard, /cms, #admin)
   useEffect(() => {
     if (blogView !== 'single-blog') {
       const homePage = siteConfig.pages?.find(p => p.slug === '/');
-      const pageTitle = homePage?.metaTitle || 'Netronomic Web – Creative Digital Agency';
-      const pageDesc = homePage?.metaDescription || 'Netronomic Web is a full-service creative agency dedicated to transforming brand ideas into powerful digital realities. We provide professional web design, graphic design, branding, SEO, and digital marketing services.';
+      const pageTitle = homePage?.metaTitle || 'Netronomic Web – Creative Digital Agency | Web Design, SEO & Digital Solutions';
+      const pageDesc = homePage?.metaDescription || 'Netronomic Web is a creative digital agency offering professional web design, development, SEO, branding, and digital solutions to help businesses grow online.';
+      const pageKeywords = homePage?.secondaryKeywords 
+        ? `${homePage.focusKeyword ? homePage.focusKeyword + ', ' : ''}${homePage.secondaryKeywords}` 
+        : 'Netronomic Web, creative digital agency, web design agency, website development, SEO services, digital marketing, branding services, professional web design, web development services, digital solutions';
       const pageOgImage = homePage?.ogImage || siteConfig.seo?.defaultOgImage || siteConfig.logo?.customLogoUrl;
 
       applyHeadMeta({
         title: pageTitle,
         description: pageDesc,
+        keywords: pageKeywords,
         ogImage: pageOgImage,
-        canonicalUrl: siteConfig.seo?.canonicalUrl || 'https://netronomicweb.com/',
+        canonicalUrl: siteConfig.seo?.canonicalUrl || 'https://netronomic.com/',
         googleSiteVerification: siteConfig.seo?.googleSiteVerification || '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM'
       });
     }
@@ -145,6 +152,7 @@ export default function App() {
         if (hash === '#admin') {
           window.history.replaceState(null, '', '/admin');
         }
+        setIsAdminAuthenticated(isAuthenticatedAdmin());
         setBlogView('site-admin');
         setIsAdminDashboardLoading(true);
       }
@@ -163,6 +171,7 @@ export default function App() {
     setBlogView(view);
     if (view === 'site-admin' || view === 'blog-admin') {
       window.history.pushState(null, '', '/admin');
+      setIsAdminAuthenticated(isAuthenticatedAdmin());
       setIsAdminDashboardLoading(true);
     } else {
       if (window.location.pathname.toLowerCase() === '/admin' || window.location.pathname.toLowerCase() === '/dashboard' || window.location.hash === '#admin') {
@@ -422,9 +431,18 @@ export default function App() {
         />
       )}
 
-      {/* Admin Portal (Direct access without login wall) */}
+      {/* Admin Portal (Protected with secure Admin Login) */}
       {(blogView === 'blog-admin' || blogView === 'site-admin') && (
-        isAdminDashboardLoading ? (
+        !isAdminAuthenticated ? (
+          <AdminLogin
+            brandName={siteConfig?.logo?.brandName || 'NETRONOMIC'}
+            onLoginSuccess={() => {
+              setIsAdminAuthenticated(true);
+              setIsAdminDashboardLoading(true);
+            }}
+            onBackToSite={() => handleNavigateView('main')}
+          />
+        ) : isAdminDashboardLoading ? (
           <AdminDashboardLoader
             siteConfig={siteConfig}
             onFinish={() => setIsAdminDashboardLoading(false)}
@@ -439,6 +457,12 @@ export default function App() {
             onDeletePost={handleDeletePost}
             onToggleStatus={handleToggleStatus}
             onExitAdmin={() => {
+              setIsAdminDashboardLoading(false);
+              handleNavigateView('main');
+            }}
+            onLogout={() => {
+              logoutAdmin();
+              setIsAdminAuthenticated(false);
               setIsAdminDashboardLoading(false);
               handleNavigateView('main');
             }}
@@ -460,11 +484,12 @@ export default function App() {
       {blogView !== 'site-admin' && blogView !== 'blog-admin' && (
         <aside aria-label="WhatsApp Contact" className="fixed bottom-6 right-6 z-40 flex items-center">
           <a
-            href={(siteConfig?.agency?.whatsappNumber?.startsWith('http') ? siteConfig?.agency?.whatsappNumber : `https://wa.me/${siteConfig?.agency?.whatsappNumber || '923020487103'}`)}
+            href="https://wa.me/923020487103"
             target="_blank"
             rel="noopener noreferrer"
             className="whatsapp-shine-btn flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-xl shadow-emerald-500/40 hover:shadow-emerald-500/60 hover:scale-105 active:scale-95 transition-all group cursor-pointer"
-            title="Message Netronomic web on WhatsApp"
+            title="Message Netronomic Web on WhatsApp"
+            aria-label="Message Netronomic Web on WhatsApp"
           >
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-80"></span>
@@ -472,7 +497,7 @@ export default function App() {
             </span>
             <MessageSquare className="w-5 h-5 fill-white/20 text-white" />
             <span className="text-xs font-bold tracking-wide">
-              Message Netronomic web on WhatsApp
+              Message Netronomic Web on WhatsApp
             </span>
           </a>
         </aside>

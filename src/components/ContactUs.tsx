@@ -85,8 +85,7 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
   };
 
   const constructWhatsAppLink = () => {
-    const num = activeAgency.whatsappNumber || '923020487103';
-    return (num.startsWith('http') ? num : `https://wa.me/${num}`);
+    return 'https://wa.me/923020487103';
   };
 
   return (
@@ -134,10 +133,11 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
                 target="_blank"
                 rel="noopener noreferrer"
                 className="whatsapp-shine-btn inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-emerald-800 font-bold text-sm hover:bg-emerald-50 transition-all shadow-md cursor-pointer"
-                title="Message Netronomic web on WhatsApp"
+                title="Message Netronomic Web on WhatsApp"
+                aria-label="Message Netronomic Web on WhatsApp"
               >
                 <MessageSquare className="w-4 h-4 text-emerald-600" />
-                <span>Message Netronomic web on WhatsApp</span>
+                <span>Message Netronomic Web on WhatsApp</span>
               </a>
             </div>
 
@@ -274,10 +274,11 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
                     target="_blank"
                     rel="noopener noreferrer"
                     className="whatsapp-shine-btn px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
-                    title="Message Netronomic web on WhatsApp"
+                    title="Message Netronomic Web on WhatsApp"
+                    aria-label="Message Netronomic Web on WhatsApp"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    <span>Message Netronomic web on WhatsApp</span>
+                    <span>Message Netronomic Web on WhatsApp</span>
                   </a>
                 </div>
               </motion.div>

@@ -17,6 +17,7 @@ export function setOrUpdateMeta(attribute: 'name' | 'property', nameOrProperty: 
 export interface HeadMetaConfig {
   title?: string;
   description?: string;
+  keywords?: string;
   ogImage?: string;
   canonicalUrl?: string;
   googleSiteVerification?: string;
@@ -25,6 +26,7 @@ export interface HeadMetaConfig {
 export function applyHeadMeta({
   title,
   description,
+  keywords,
   ogImage,
   canonicalUrl,
   googleSiteVerification
@@ -41,6 +43,10 @@ export function applyHeadMeta({
     setOrUpdateMeta('name', 'description', description);
     setOrUpdateMeta('property', 'og:description', description);
     setOrUpdateMeta('name', 'twitter:description', description);
+  }
+
+  if (keywords) {
+    setOrUpdateMeta('name', 'keywords', keywords);
   }
 
   if (ogImage) {

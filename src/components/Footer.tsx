@@ -61,16 +61,17 @@ export const Footer: React.FC<FooterProps> = ({ onOpenQuote, onNavigate, siteCon
             </p>
             <div className="flex flex-col gap-4 pt-2">
               <a
-                href={(activeAgency.whatsappNumber?.startsWith('http') ? activeAgency.whatsappNumber : `https://wa.me/${activeAgency.whatsappNumber || '923020487103'}`)}
+                href="https://wa.me/923020487103"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="whatsapp-shine-btn inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white border border-emerald-400/40 shadow-lg shadow-emerald-500/25 text-xs font-semibold hover:shadow-emerald-500/40 transition-all flex-col items-start w-fit cursor-pointer group"
-                title="Message Netronomic web on WhatsApp"
+                title="Message Netronomic Web on WhatsApp"
+                aria-label="Message Netronomic Web on WhatsApp"
               >
                 <div className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-white animate-ping group-hover:animate-none" />
                   <MessageSquare className="w-4 h-4 text-white" />
-                  <span className="font-bold text-sm">Message Netronomic web on WhatsApp</span>
+                  <span className="font-bold text-sm">Message Netronomic Web on WhatsApp</span>
                 </div>
                 <span className="text-[11px] font-mono text-emerald-100 opacity-90 pl-6">
                   https://wa.me/923020487103

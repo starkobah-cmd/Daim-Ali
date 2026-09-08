@@ -121,11 +121,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
           {/* Action CTAs */}
           <div className="hidden sm:flex items-center gap-2.5 shrink-0">
             <a
-              href={(whatsappNum.startsWith('http') ? whatsappNum : `https://wa.me/${whatsappNum}`)}
+              href="https://wa.me/923020487103"
               target="_blank"
               rel="noopener noreferrer"
               className="whatsapp-shine-btn inline-flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer group"
-              title="Message Netronomic web on WhatsApp"
+              title="Message Netronomic Web on WhatsApp"
+              aria-label="Message Netronomic Web on WhatsApp"
             >
               <span className="w-2 h-2 rounded-full bg-white animate-ping group-hover:animate-none" />
               <MessageSquare className="w-3.5 h-3.5 text-white" />
@@ -194,14 +195,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
           </div>
           <div className="flex flex-col gap-2 pt-2">
             <a
-              href={(whatsappNum.startsWith('http') ? whatsappNum : `https://wa.me/${whatsappNum}`)}
+              href="https://wa.me/923020487103"
               target="_blank"
               rel="noopener noreferrer"
               className="whatsapp-shine-btn w-full flex items-center justify-center gap-2 text-sm font-bold py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-md transition-all cursor-pointer"
-              title="Message Netronomic web on WhatsApp"
+              title="Message Netronomic Web on WhatsApp"
+              aria-label="Message Netronomic Web on WhatsApp"
             >
               <MessageSquare className="w-4 h-4 text-white" />
-              <span>Message Netronomic web on WhatsApp</span>
+              <span>Message Netronomic Web on WhatsApp</span>
             </a>
             
             <button
