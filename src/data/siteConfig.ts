@@ -261,7 +261,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   hero: {
     titlePrefix: 'Accelerate Your Brand with',
     typingPhrases: [
-      'Web Build',
+      'Website Development',
       'Logo Design',
       'Viral Video Reels',
       'Google SEO',

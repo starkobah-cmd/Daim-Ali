@@ -11,7 +11,7 @@ interface HeroProps {
 }
 
 const DEFAULT_PHRASES = [
-  'Web Build',
+  'Website Development',
   'Logo Design',
   'Viral Video Reels',
   'Google SEO',

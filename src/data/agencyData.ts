@@ -47,6 +47,18 @@ export const servicesData: ServiceItem[] = [
     badge: 'Most Popular',
   },
   {
+    id: 'app-design',
+    title: 'App Design',
+    shortDesc: 'Intuitive mobile and web app UI/UX wireframes, user flows, and interactive prototypes.',
+    fullDesc: 'We craft stunning, user-centric mobile and web application interfaces designed for seamless navigation, high user engagement, and exceptional conversion rates across iOS and Android.',
+    iconName: 'Lock',
+    category: 'design',
+    features: ['iOS & Android UI/UX Design', 'Interactive Figma Prototypes', 'User Journey & Flow Mapping', 'Design Systems & Component Libraries', 'Developer-Ready Handover Assets'],
+    startingPrice: '$349',
+    deliveryTime: 'Coming Soon',
+    badge: 'Coming Soon',
+  },
+  {
     id: 'logo-design',
     title: 'Logo Design',
     shortDesc: 'Memorable, modern visual identity and branding assets that instantly command brand authority.',

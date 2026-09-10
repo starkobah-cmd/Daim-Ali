@@ -16,6 +16,7 @@ import {
   Sparkles,
   Info,
   Search,
+  Lock,
 } from 'lucide-react';
 import { servicesData } from '../data/agencyData';
 import { ServiceItem } from '../types';
@@ -40,6 +41,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService, onRequestQu
       case 'Search': return <Search className="w-6 h-6" />;
       case 'Link': return <Link className="w-6 h-6" />;
       case 'Share2': return <Share2 className="w-6 h-6" />;
+      case 'Lock': return <Lock className="w-6 h-6" />;
       default: return <Sparkles className="w-6 h-6" />;
     }
   };
@@ -102,12 +104,19 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService, onRequestQu
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
-              className="bg-white rounded-2xl border border-sky-100 p-6 shadow-sm hover:shadow-xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden"
+              className={`rounded-2xl border p-6 shadow-sm transition-all duration-300 flex flex-col justify-between group relative overflow-hidden ${
+                service.badge === 'Coming Soon'
+                  ? 'bg-slate-50/70 border-dashed border-slate-300 opacity-85 hover:opacity-100'
+                  : 'bg-white border-sky-100 hover:shadow-xl hover:border-sky-300'
+              }`}
             >
               {/* Badge if present */}
               {service.badge && (
-                <div className="absolute top-4 right-4 bg-sky-500 text-white text-[10px] uppercase tracking-widest font-extrabold px-2.5 py-0.5 rounded-full shadow-xs">
-                  {service.badge}
+                <div className={`absolute top-4 right-4 text-[10px] uppercase tracking-widest font-extrabold px-2.5 py-1 rounded-full shadow-xs flex items-center gap-1 ${
+                  service.badge === 'Coming Soon' ? 'bg-slate-800 text-slate-200' : 'bg-sky-500 text-white'
+                }`}>
+                  {service.badge === 'Coming Soon' && <Lock className="w-3 h-3" />}
+                  <span>{service.badge}</span>
                 </div>
               )}
 

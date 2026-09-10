@@ -12,7 +12,6 @@ interface AdminLoginProps {
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackToSite, brandName = 'NETRONOMIC' }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +36,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
 
     setIsLoading(true);
     try {
-      const result = await verifyAdminLogin(identifier, password, rememberMe);
+      const result = await verifyAdminLogin(identifier, password, false);
       if (result.success) {
         setIsUnlocked(true);
         // Show glowing logo animation before calling onLoginSuccess
@@ -298,20 +297,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-              </div>
-
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center justify-between text-xs">
-                <label className="flex items-center gap-2 text-slate-300 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-sky-500 focus:ring-sky-500/20 accent-sky-500 cursor-pointer"
-                  />
-                  <span>Remember session (30 days)</span>
-                </label>
-                <span className="text-slate-500 text-[11px]">Session encryption on</span>
               </div>
 
               <button
