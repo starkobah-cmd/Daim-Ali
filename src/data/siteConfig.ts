@@ -7,9 +7,11 @@ export interface SiteLogoConfig {
   showDot: boolean;
   taglineText: string;
   showTagline: boolean;
-  customLogoUrl: string;
+  customLogoUrl: string; // Header Logo URL
+  footerLogoUrl?: string; // Footer Logo URL
   glowStyle: 'subtle' | 'medium' | 'vibrant' | 'none';
-  iconVariant: 'network-orb' | 'custom-image' | 'none';
+  iconVariant: 'network-orb' | 'custom-image' | 'none'; // Header icon variant
+  footerIconVariant?: 'network-orb' | 'custom-image' | 'none'; // Footer icon variant
   logoSize?: number;
   gap?: number;
   showCustomButton?: boolean;
@@ -255,8 +257,10 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     taglineText: 'WEB AGENCY',
     showTagline: true,
     customLogoUrl: '',
+    footerLogoUrl: '',
     glowStyle: 'subtle',
     iconVariant: 'network-orb',
+    footerIconVariant: 'network-orb',
   },
   hero: {
     titlePrefix: 'Accelerate Your Brand with',

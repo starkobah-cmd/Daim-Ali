@@ -163,8 +163,152 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
     }
   };
 
-  // Helper to render markdown blocks cleanly
-  const renderContentBlocks = (content: string) => {
+  // Helper to render content blocks or markdown cleanly
+  const renderContentBlocks = (post: BlogPost) => {
+    if (post.blocks && post.blocks.length > 0) {
+      return post.blocks.map((block, i) => {
+        const data = block.data || {};
+        switch (block.type) {
+          case 'heading': {
+            const text = data.text || '';
+            const id = text.toLowerCase().replace(/[^\w]+/g, '-');
+            const level = data.level || 2;
+            if (level === 1) {
+              return <h1 key={block.id || i} id={id} className="text-3xl sm:text-4xl font-black text-white mt-8 mb-4 tracking-tight scroll-mt-28">{text}</h1>;
+            } else if (level === 3) {
+              return <h3 key={block.id || i} id={id} className="text-xl font-bold text-sky-300 mt-6 mb-3 scroll-mt-28">{text}</h3>;
+            } else if (level === 4) {
+              return <h4 key={block.id || i} id={id} className="text-lg font-bold text-white mt-6 mb-2 scroll-mt-28">{text}</h4>;
+            }
+            return <h2 key={block.id || i} id={id} className="text-2xl sm:text-3xl font-extrabold text-white mt-8 mb-4 tracking-tight border-b border-slate-800 pb-2 scroll-mt-28">{text}</h2>;
+          }
+          case 'introduction':
+            return (
+              <div key={block.id || i} className="my-6 p-6 rounded-2xl bg-sky-950/40 border border-sky-500/30 text-sky-100 text-lg sm:text-xl font-medium leading-relaxed shadow-lg">
+                {data.text}
+              </div>
+            );
+          case 'paragraph':
+            return (
+              <p key={block.id || i} className="text-slate-300 text-base sm:text-lg leading-relaxed my-4 font-normal">
+                {data.text}
+              </p>
+            );
+          case 'image': {
+            const alignClass = data.alignment === 'left' ? 'text-left' : data.alignment === 'right' ? 'text-right' : 'text-center';
+            return (
+              <div key={block.id || i} className={`my-8 ${alignClass}`}>
+                {data.link ? (
+                  <a href={data.link} target="_blank" rel="noopener noreferrer">
+                    <img src={data.imageUrl} alt={data.altText || ''} className="rounded-2xl max-h-[500px] inline-block object-cover shadow-2xl border border-slate-800 hover:opacity-95 transition-opacity" />
+                  </a>
+                ) : (
+                  <img src={data.imageUrl} alt={data.altText || ''} className="rounded-2xl max-h-[500px] inline-block object-cover shadow-2xl border border-slate-800" />
+                )}
+                {data.caption && (
+                  <p className="text-xs text-slate-400 mt-2.5 italic">
+                    {data.caption}
+                  </p>
+                )}
+              </div>
+            );
+          }
+          case 'table': {
+            const cols = data.columns || [];
+            const rows = data.rows || [];
+            return (
+              <div key={block.id || i} className="my-8 overflow-x-auto rounded-2xl border border-slate-800 bg-[#0B1120] shadow-xl">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                  {cols.length > 0 && (
+                    <thead>
+                      <tr className="border-b border-slate-800 bg-slate-900/80">
+                        {cols.map((col, idx) => (
+                          <th key={idx} className="p-3.5 font-bold text-sky-400">{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                  )}
+                  <tbody className="divide-y divide-slate-800/60">
+                    {rows.map((row, rIdx) => (
+                      <tr key={rIdx} className="hover:bg-slate-900/40 transition-colors">
+                        {row.map((cell, cIdx) => (
+                          <td key={cIdx} className="p-3.5 text-slate-300">{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }
+          case 'quote':
+            return (
+              <blockquote key={block.id || i} className="my-6 p-6 rounded-2xl bg-gradient-to-r from-sky-950/80 to-slate-900 border-l-4 border-sky-400 text-sky-100 italic font-medium shadow-md">
+                "{data.text}"
+              </blockquote>
+            );
+          case 'bullet-list':
+            return (
+              <ul key={block.id || i} className="my-4 space-y-2 list-none">
+                {(data.items || []).map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5 text-slate-300 text-sm sm:text-base">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-2 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            );
+          case 'numbered-list':
+            return (
+              <ol key={block.id || i} className="my-4 space-y-2 list-none">
+                {(data.items || []).map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-slate-300 text-sm sm:text-base">
+                    <span className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center font-mono text-xs font-bold mt-0.5 shrink-0">{idx + 1}</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ol>
+            );
+          case 'faq':
+            return (
+              <div key={block.id || i} className="my-8 space-y-4">
+                <h3 className="text-xl font-extrabold text-white mb-4">Frequently Asked Questions</h3>
+                {(data.questions || []).map((faq, idx) => (
+                  <div key={idx} className="p-5 rounded-2xl bg-[#0B1120] border border-slate-800 space-y-2">
+                    <h4 className="text-sm sm:text-base font-bold text-sky-300 flex items-center gap-2">
+                      <span className="text-sky-500 font-mono">Q.</span>
+                      <span>{faq.question}</span>
+                    </h4>
+                    <p className="text-xs sm:text-sm text-slate-300 pl-5 leading-relaxed">{faq.answer}</p>
+                  </div>
+                ))}
+              </div>
+            );
+          case 'custom-html':
+            return (
+              <div key={block.id || i} className="my-6 p-4 rounded-xl bg-slate-900 border border-slate-800 overflow-x-auto" dangerouslySetInnerHTML={{ __html: data.html || '' }} />
+            );
+          case 'custom-code':
+            return (
+              <div key={block.id || i} className="my-6 rounded-2xl bg-[#050816] border border-slate-800 overflow-hidden shadow-xl">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/80 border-b border-slate-800 text-xs font-mono text-slate-400">
+                  <span className="flex items-center gap-2">
+                    <Code2 className="w-4 h-4 text-sky-400" />
+                    <span>{data.language || 'code'}</span>
+                  </span>
+                </div>
+                <pre className="p-4 text-xs sm:text-sm font-mono text-sky-200/90 overflow-x-auto leading-relaxed">
+                  <code>{data.code || ''}</code>
+                </pre>
+              </div>
+            );
+          default:
+            return null;
+        }
+      });
+    }
+
+    const content = post.content || '';
     const blocks = content.split('\n\n');
     let codeBlockCount = 0;
 
@@ -410,7 +554,7 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
 
         {/* Article Body Content */}
         <article className="prose prose-invert max-w-none mb-16">
-          {renderContentBlocks(post.content)}
+          {renderContentBlocks(post)}
         </article>
 
         {/* Article Tags */}

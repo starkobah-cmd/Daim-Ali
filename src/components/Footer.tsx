@@ -55,7 +55,16 @@ export const Footer: React.FC<FooterProps> = ({ onOpenQuote, onNavigate, siteCon
             siteConfig?.logo?.footerLogoAlign === 'right' ? 'flex flex-col items-end text-right' :
             'flex flex-col items-start text-left'
           }`}>
-            <Logo variant="dark" size="md" showTagline={true} config={siteConfig?.logo} />
+            <Logo 
+              variant="dark" 
+              size="md" 
+              showTagline={true} 
+              config={{
+                ...siteConfig?.logo,
+                customLogoUrl: siteConfig?.logo?.footerLogoUrl || '',
+                iconVariant: siteConfig?.logo?.footerIconVariant || (siteConfig?.logo?.footerLogoUrl ? 'custom-image' : 'network-orb'),
+              }} 
+            />
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm">
               Full-service digital agency providing high-impact Website Design, Mobile Apps, Logo & Poster Design, Reel Video Editing, SEO, Profile & Social Backlinks.
             </p>

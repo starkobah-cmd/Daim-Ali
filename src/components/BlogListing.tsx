@@ -8,8 +8,6 @@ import {
   User,
   ArrowRight,
   ShieldCheck,
-  Mail,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Filter
@@ -33,8 +31,6 @@ export const BlogListing: React.FC<BlogListingProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
 
   const postsPerPage = 6;
 
@@ -67,17 +63,6 @@ export const BlogListing: React.FC<BlogListingProps> = ({
     const start = (currentPage - 1) * postsPerPage;
     return filteredPosts.slice(start, start + postsPerPage);
   }, [filteredPosts, currentPage]);
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail.trim()) {
-      setNewsletterSubscribed(true);
-      setTimeout(() => {
-        setNewsletterSubscribed(false);
-        setNewsletterEmail('');
-      }, 4000);
-    }
-  };
 
   return (
     <div className="pt-24 pb-20 bg-[#050816] text-white min-h-screen relative overflow-hidden">
@@ -380,52 +365,7 @@ export const BlogListing: React.FC<BlogListingProps> = ({
           </div>
         )}
 
-        {/* Newsletter Subscription Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative rounded-3xl p-8 sm:p-12 bg-gradient-to-r from-sky-950/60 via-blue-950/40 to-slate-900/90 border border-sky-500/30 text-center shadow-[0_0_50px_rgba(56,189,248,0.15)] overflow-hidden"
-        >
-          <div className="max-w-2xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold uppercase tracking-wider">
-              <Mail className="w-3.5 h-3.5 text-sky-400" />
-              <span>Weekly Agency Dispatch</span>
-            </div>
 
-            <h3 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Subscribe to Growth & Tech Articles
-            </h3>
-
-            <p className="text-xs sm:text-sm text-slate-300">
-              Get the latest UI/UX breakdowns, SEO link-building case studies, and web development strategies delivered directly to your inbox every week.
-            </p>
-
-            {newsletterSubscribed ? (
-              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-bold animate-pulse">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <span>Thank you! You are now subscribed to Skyline Insights.</span>
-              </div>
-            ) : (
-              <form onSubmit={handleSubscribe} className="pt-2 flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
-                <input
-                  type="email"
-                  required
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Enter your work email address..."
-                  className="flex-1 px-4 py-3.5 rounded-xl bg-[#050816] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 text-sm"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold text-sm shadow-md shadow-sky-500/20 transition-all shrink-0 cursor-pointer"
-                >
-                  Subscribe Free
-                </button>
-              </form>
-            )}
-          </div>
-        </motion.div>
 
       </div>
     </div>

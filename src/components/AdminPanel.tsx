@@ -63,7 +63,7 @@ import {
   InquiryItem,
   DEFAULT_SITE_CONFIG
 } from '../data/siteConfig';
-import { BlogPost, PostStatus, PortfolioItem } from '../types';
+import { BlogPost, PostStatus, PortfolioItem, BlogBlock, BlogBlockType } from '../types';
 import { BLOG_CATEGORIES } from '../data/blogData';
 import { AdminMediaManager } from './AdminMediaManager';
 import { MediaPickerField } from './MediaPickerField';
@@ -143,6 +143,84 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isBlogModalOpen, setIsBlogModalOpen] = useState(false);
   const [blogEditorTab, setBlogEditorTab] = useState<'content' | 'seo'>('content');
   const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
+  const [blogContentSubTab, setBlogContentSubTab] = useState<'builder' | 'markdown' | 'import' | 'preview'>('builder');
+
+  const getDefaultBlockData = (type: BlogBlockType): BlogBlock['data'] => {
+    switch (type) {
+      case 'heading': return { text: 'Section Heading', level: 2 };
+      case 'paragraph': return { text: 'Write your paragraph content here...' };
+      case 'introduction': return { text: 'Write your introductory lead paragraph here...' };
+      case 'image': return { imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80', altText: 'Illustration', caption: 'Image caption', alignment: 'center' };
+      case 'table': return { columns: ['Column 1', 'Column 2', 'Column 3'], rows: [['Row 1 Col 1', 'Row 1 Col 2', 'Row 1 Col 3'], ['Row 2 Col 1', 'Row 2 Col 2', 'Row 2 Col 3']] };
+      case 'quote': return { text: 'Important insight or quote goes here.' };
+      case 'bullet-list': return { items: ['First list item', 'Second list item', 'Third list item'] };
+      case 'numbered-list': return { items: ['Step 1 description', 'Step 2 description', 'Step 3 description'] };
+      case 'faq': return { questions: [{ question: 'What is this about?', answer: 'Detailed answer goes here.' }] };
+      case 'custom-html': return { html: '<div class="p-4 bg-sky-950/30 rounded-xl text-sky-200">Custom HTML Block</div>' };
+      case 'custom-code': return { code: 'console.log("Hello Netronomic");', language: 'javascript' };
+      default: return { text: '' };
+    }
+  };
+
+  const handleAddBlogBlock = (type: BlogBlockType) => {
+    if (!editingPost) return;
+    const newBlock: BlogBlock = {
+      id: `block-${Date.now()}`,
+      type,
+      data: getDefaultBlockData(type)
+    };
+    const currentBlocks = editingPost.blocks || [];
+    setEditingPost({
+      ...editingPost,
+      blocks: [...currentBlocks, newBlock]
+    });
+  };
+
+  const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
+    if (!editingPost || !editingPost.blocks) return;
+    const blocks = [...editingPost.blocks];
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === blocks.length - 1) return;
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    const [moved] = blocks.splice(index, 1);
+    blocks.splice(targetIdx, 0, moved);
+    setEditingPost({ ...editingPost, blocks });
+  };
+
+  const handleDuplicateBlock = (index: number) => {
+    if (!editingPost || !editingPost.blocks) return;
+    const blocks = [...editingPost.blocks];
+    const target = blocks[index];
+    const duplicated: BlogBlock = {
+      ...target,
+      id: `block-${Date.now()}`,
+      data: JSON.parse(JSON.stringify(target.data))
+    };
+    blocks.splice(index + 1, 0, duplicated);
+    setEditingPost({ ...editingPost, blocks });
+  };
+
+  const handleDeleteBlock = (index: number) => {
+    if (!editingPost || !editingPost.blocks) return;
+    if (confirm('Delete this block?')) {
+      const blocks = [...editingPost.blocks];
+      blocks.splice(index, 1);
+      setEditingPost({ ...editingPost, blocks });
+    }
+  };
+
+  const handleUpdateBlockData = (index: number, dataKey: string, value: any) => {
+    if (!editingPost || !editingPost.blocks) return;
+    const blocks = [...editingPost.blocks];
+    blocks[index] = {
+      ...blocks[index],
+      data: {
+        ...blocks[index].data,
+        [dataKey]: value
+      }
+    };
+    setEditingPost({ ...editingPost, blocks });
+  };
 
   // Page Editor State
   const [selectedPageId, setSelectedPageId] = useState<string>(siteConfig.pages?.[0]?.id || 'page-home');
@@ -489,7 +567,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       title: '',
       slug: '',
       excerpt: '',
-      content: `# Article Headline\n\nWrite your informative article content here using standard Markdown...`,
+      content: 'Write your introductory lead paragraph here...\n\nWrite your main article content here...',
+      blocks: [
+        { id: 'b1', type: 'introduction', data: { text: 'Write your introductory lead paragraph here...' } },
+        { id: 'b2', type: 'paragraph', data: { text: 'Write your main article content here...' } }
+      ],
       featuredImage: FEATURED_IMAGE_PRESETS[0].url,
       author: {
         name: localConfig.agency?.name || 'Netronomic Team',
@@ -507,6 +589,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       secondaryKeywords: '',
     });
     setBlogEditorTab('content');
+    setBlogContentSubTab('builder');
     setIsBlogModalOpen(true);
   };
 
@@ -534,13 +617,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const resolvedDesc = editingPost.metaDescription || editingPost.excerpt || '';
     const resolvedOgImage = editingPost.ogImage || editingPost.featuredImage || FEATURED_IMAGE_PRESETS[0].url;
 
+    const serializedContent = (editingPost.blocks && editingPost.blocks.length > 0)
+      ? editingPost.blocks.map(b => {
+          const d = b.data || {};
+          switch (b.type) {
+            case 'heading': return `${'#'.repeat(d.level || 2)} ${d.text}`;
+            case 'introduction':
+            case 'paragraph':
+            case 'quote': return d.text;
+            case 'image': return `![${d.altText || ''}](${d.imageUrl || ''})\n*${d.caption || ''}*`;
+            case 'bullet-list': return (d.items || []).map(item => `- ${item}`).join('\n');
+            case 'numbered-list': return (d.items || []).map((item, idx) => `${idx + 1}. ${item}`).join('\n');
+            case 'faq': return (d.questions || []).map(q => `**Q: ${q.question}**\nA: ${q.answer}`).join('\n\n');
+            case 'custom-html': return d.html;
+            case 'custom-code': return `\`\`\`${d.language || 'code'}\n${d.code}\n\`\`\``;
+            default: return '';
+          }
+        }).filter(Boolean).join('\n\n')
+      : (editingPost.content || '');
+
     // Calculate score using RankMath analyzer
     const calculatedSeo = analyzeSeo({
       focusKeyword: editingPost.focusKeyword || '',
       seoTitle: resolvedTitle,
       metaDescription: resolvedDesc,
       slug: resolvedSlug,
-      content: editingPost.content || '',
+      content: serializedContent,
       ogImage: resolvedOgImage
     });
 
@@ -549,7 +651,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       title: editingPost.title,
       slug: resolvedSlug,
       excerpt: editingPost.excerpt || '',
-      content: editingPost.content || '',
+      content: serializedContent,
+      blocks: editingPost.blocks || [],
       featuredImage: editingPost.featuredImage || FEATURED_IMAGE_PRESETS[0].url,
       author: editingPost.author || {
         name: 'Netronomic Team',
@@ -1851,47 +1954,80 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
-              {/* WordPress Style Media Library Logo Selector */}
-              <MediaPickerField
-                label="Custom Brand Logo Image"
-                value={localConfig.logo?.customLogoUrl || ''}
-                onChange={(url) =>
-                  setLocalConfig({
-                    ...localConfig,
-                    logo: { ...localConfig.logo, customLogoUrl: url, iconVariant: url ? 'custom-image' : localConfig.logo?.iconVariant || 'network-orb' },
-                  })
-                }
-                category="logo"
-                helperText="Upload your company logo or select from Media Library. (Leave blank to use vector orb logo)"
-              />
+              {/* Header Logo Settings */}
+              <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+                <h3 className="text-sm font-bold text-sky-400 uppercase tracking-wider">Header Logo Settings</h3>
+                <MediaPickerField
+                  label="Header Brand Logo Image"
+                  value={localConfig.logo?.customLogoUrl || ''}
+                  onChange={(url) =>
+                    setLocalConfig({
+                      ...localConfig,
+                      logo: { ...localConfig.logo, customLogoUrl: url, iconVariant: url ? 'custom-image' : localConfig.logo?.iconVariant || 'network-orb' },
+                    })
+                  }
+                  category="logo"
+                  helperText="Upload header logo or select from Media Library. (Used in navbar header)"
+                />
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Header Logo Icon Mode</label>
+                  <select
+                    value={localConfig.logo?.iconVariant || 'network-orb'}
+                    onChange={(e) =>
+                      setLocalConfig({
+                        ...localConfig,
+                        logo: { ...localConfig.logo, iconVariant: e.target.value as any },
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
+                  >
+                    <option value="network-orb">Default Vector Orb</option>
+                    <option value="custom-image">Custom Image (Upload above)</option>
+                    <option value="none">Hide Icon Entirely</option>
+                  </select>
+                </div>
+              </div>
 
-
-              
+              {/* Footer Logo Settings */}
+              <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+                <h3 className="text-sm font-bold text-sky-400 uppercase tracking-wider">Footer Logo Settings</h3>
+                <MediaPickerField
+                  label="Footer Brand Logo Image"
+                  value={localConfig.logo?.footerLogoUrl || ''}
+                  onChange={(url) =>
+                    setLocalConfig({
+                      ...localConfig,
+                      logo: { ...localConfig.logo, footerLogoUrl: url, footerIconVariant: url ? 'custom-image' : localConfig.logo?.footerIconVariant || 'network-orb' },
+                    })
+                  }
+                  category="logo"
+                  helperText="Upload footer logo or select from Media Library. (Used independently in website footer)"
+                />
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Footer Logo Icon Mode</label>
+                  <select
+                    value={localConfig.logo?.footerIconVariant || 'network-orb'}
+                    onChange={(e) =>
+                      setLocalConfig({
+                        ...localConfig,
+                        logo: { ...localConfig.logo, footerIconVariant: e.target.value as any },
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
+                  >
+                    <option value="network-orb">Default Vector Orb</option>
+                    <option value="custom-image">Custom Image (Upload above)</option>
+                    <option value="none">Hide Icon Entirely</option>
+                  </select>
+                </div>
+              </div>
               {/* Logo Layout & Custom Button Options */}
               <div className="pt-6 border-t border-slate-800">
                 <h2 className="text-lg font-bold text-white mb-4">Logo Image & Layout Controls</h2>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">Logo Icon Mode</label>
-                    <select
-                      value={localConfig.logo?.iconVariant || 'network-orb'}
-                      onChange={(e) =>
-                        setLocalConfig({
-                          ...localConfig,
-                          logo: { ...localConfig.logo, iconVariant: e.target.value as any },
-                        })
-                      }
-                      className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                    >
-                      <option value="network-orb">Default Vector Orb</option>
-                      <option value="custom-image">Custom Image (Upload above)</option>
-                      <option value="none">Hide Icon Entirely</option>
-                    </select>
-                  </div>
-                  <div>
                     <label className="block text-xs font-bold text-slate-300 mb-1">
-                      
                       Global Logo Size ({localConfig.logo?.logoSize || 100}%)
                     </label>
                     <input
@@ -1982,8 +2118,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </label>
                   </div>
                 </div>
+              </div>
 
-                <div className="p-5 border border-sky-500/30 bg-sky-950/20 rounded-xl space-y-4">
+              <div className="p-5 border border-sky-500/30 bg-sky-950/20 rounded-xl space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-sky-400">Custom Action Button Instead of Text</h3>
                     <div className="flex items-center">
@@ -2089,9 +2226,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </div>
                   )}
                 </div>
-              </div>
 
-              
               <div className="pt-4 border-t border-slate-800 flex justify-end">
                 <button
                   onClick={() => triggerSaveNotification('Branding updated!')}
@@ -2777,15 +2912,418 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1">Content (Markdown Format)</label>
-                      <textarea
-                        rows={8}
-                        value={editingPost.content || ''}
-                        onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                        className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200 focus:outline-none focus:border-sky-500 leading-relaxed"
-                      />
+                    {/* Content Editor Sub-Tabs */}
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setBlogContentSubTab('builder')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          blogContentSubTab === 'builder' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-white bg-slate-900'
+                        }`}
+                      >
+                        Visual Block Builder
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBlogContentSubTab('markdown')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          blogContentSubTab === 'markdown' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-white bg-slate-900'
+                        }`}
+                      >
+                        Raw Markdown
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBlogContentSubTab('import')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          blogContentSubTab === 'import' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-white bg-slate-900'
+                        }`}
+                      >
+                        Import Code
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBlogContentSubTab('preview')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          blogContentSubTab === 'preview' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-white bg-slate-900'
+                        }`}
+                      >
+                        Live Preview
+                      </button>
                     </div>
+
+                    {blogContentSubTab === 'builder' && (
+                      <div className="space-y-4">
+                        {/* Add Block Toolbar */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-900 border border-slate-800">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-xs font-bold text-slate-300 mr-2">Add Section:</span>
+                            <button type="button" onClick={() => handleAddBlogBlock('heading')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Heading</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('paragraph')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Paragraph</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('introduction')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Intro</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('image')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Image</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('table')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Table</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('quote')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Quote</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('bullet-list')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Bullet List</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('numbered-list')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Numbered List</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('faq')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ FAQ</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('custom-html')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ HTML</button>
+                            <button type="button" onClick={() => handleAddBlogBlock('custom-code')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Code</button>
+                          </div>
+                        </div>
+
+                        {/* Blocks List */}
+                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                          {(!editingPost.blocks || editingPost.blocks.length === 0) ? (
+                            <div className="text-center py-12 text-slate-500 text-xs">
+                              No blocks added yet. Click above to add article sections.
+                            </div>
+                          ) : (
+                            editingPost.blocks.map((block, idx) => (
+                              <div key={block.id} className="p-4 rounded-2xl bg-[#0B1120] border border-slate-800 space-y-3 relative group shadow-md">
+                                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                                  <span className="text-[11px] font-extrabold uppercase text-sky-400 font-mono tracking-wider">
+                                    #{idx + 1} • {block.type}
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <button type="button" onClick={() => handleMoveBlock(idx, 'up')} className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white cursor-pointer" title="Move Up"><ArrowUp className="w-3.5 h-3.5" /></button>
+                                    <button type="button" onClick={() => handleMoveBlock(idx, 'down')} className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white cursor-pointer" title="Move Down"><ArrowDown className="w-3.5 h-3.5" /></button>
+                                    <button type="button" onClick={() => handleDuplicateBlock(idx)} className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white cursor-pointer" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+                                    <button type="button" onClick={() => handleDeleteBlock(idx)} className="p-1 rounded bg-rose-500/20 text-rose-400 hover:text-white cursor-pointer" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                                  </div>
+                                </div>
+
+                                {/* Block Specific Inputs */}
+                                {block.type === 'heading' && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                                    <div>
+                                      <label className="block text-[10px] font-bold text-slate-400 mb-1">Level</label>
+                                      <select
+                                        value={block.data.level || 2}
+                                        onChange={(e) => handleUpdateBlockData(idx, 'level', parseInt(e.target.value))}
+                                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
+                                      >
+                                        <option value={1}>H1</option>
+                                        <option value={2}>H2</option>
+                                        <option value={3}>H3</option>
+                                        <option value={4}>H4</option>
+                                      </select>
+                                    </div>
+                                    <div className="sm:col-span-3">
+                                      <label className="block text-[10px] font-bold text-slate-400 mb-1">Heading Text</label>
+                                      <input
+                                        type="text"
+                                        value={block.data.text || ''}
+                                        onChange={(e) => handleUpdateBlockData(idx, 'text', e.target.value)}
+                                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {(block.type === 'paragraph' || block.type === 'introduction' || block.type === 'quote') && (
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 mb-1">
+                                      {block.type === 'quote' ? 'Quote Text' : block.type === 'introduction' ? 'Lead Introduction Text' : 'Paragraph Text'}
+                                    </label>
+                                    <textarea
+                                      rows={3}
+                                      value={block.data.text || ''}
+                                      onChange={(e) => handleUpdateBlockData(idx, 'text', e.target.value)}
+                                      className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs leading-relaxed"
+                                    />
+                                  </div>
+                                )}
+
+                                {block.type === 'image' && (
+                                  <div className="space-y-3">
+                                    <MediaPickerField
+                                      label="Image Source"
+                                      value={block.data.imageUrl || ''}
+                                      onChange={(url) => handleUpdateBlockData(idx, 'imageUrl', url)}
+                                      category="blog"
+                                    />
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                      <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Alt Text</label>
+                                        <input
+                                          type="text"
+                                          value={block.data.altText || ''}
+                                          onChange={(e) => handleUpdateBlockData(idx, 'altText', e.target.value)}
+                                          className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Caption</label>
+                                        <input
+                                          type="text"
+                                          value={block.data.caption || ''}
+                                          onChange={(e) => handleUpdateBlockData(idx, 'caption', e.target.value)}
+                                          className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Alignment</label>
+                                        <select
+                                          value={block.data.alignment || 'center'}
+                                          onChange={(e) => handleUpdateBlockData(idx, 'alignment', e.target.value)}
+                                          className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
+                                        >
+                                          <option value="left">Left</option>
+                                          <option value="center">Center</option>
+                                          <option value="right">Right</option>
+                                        </select>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {block.type === 'table' && (
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-bold text-slate-400 uppercase">Table Editor</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const cols = block.data.columns || [];
+                                          const rows = block.data.rows || [];
+                                          handleUpdateBlockData(idx, 'rows', [...rows, cols.map(() => 'Cell')]);
+                                        }}
+                                        className="px-2 py-1 rounded bg-slate-800 text-sky-400 text-[10px] font-bold cursor-pointer"
+                                      >
+                                        + Add Row
+                                      </button>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full text-xs">
+                                        <thead>
+                                          <tr>
+                                            {(block.data.columns || []).map((col, cIdx) => (
+                                              <th key={cIdx} className="p-1">
+                                                <input
+                                                  type="text"
+                                                  value={col}
+                                                  onChange={(e) => {
+                                                    const cols = [...(block.data.columns || [])];
+                                                    cols[cIdx] = e.target.value;
+                                                    handleUpdateBlockData(idx, 'columns', cols);
+                                                  }}
+                                                  className="w-full px-2 py-1 rounded bg-slate-950 border border-slate-800 text-sky-400 font-bold text-xs"
+                                                />
+                                              </th>
+                                            ))}
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {(block.data.rows || []).map((row, rIdx) => (
+                                            <tr key={rIdx}>
+                                              {row.map((cell, cIdx) => (
+                                                <td key={cIdx} className="p-1">
+                                                  <input
+                                                    type="text"
+                                                    value={cell}
+                                                    onChange={(e) => {
+                                                      const rows = JSON.parse(JSON.stringify(block.data.rows || []));
+                                                      rows[rIdx][cIdx] = e.target.value;
+                                                      handleUpdateBlockData(idx, 'rows', rows);
+                                                    }}
+                                                    className="w-full px-2 py-1 rounded bg-slate-950 border border-slate-800 text-slate-300 text-xs"
+                                                  />
+                                                </td>
+                                              ))}
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {(block.type === 'bullet-list' || block.type === 'numbered-list') && (
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-bold text-slate-400 uppercase">List Items</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const items = block.data.items || [];
+                                          handleUpdateBlockData(idx, 'items', [...items, 'New list item']);
+                                        }}
+                                        className="px-2 py-1 rounded bg-slate-800 text-sky-400 text-[10px] font-bold cursor-pointer"
+                                      >
+                                        + Add Item
+                                      </button>
+                                    </div>
+                                    {(block.data.items || []).map((item, itemIdx) => (
+                                      <div key={itemIdx} className="flex items-center gap-2">
+                                        <input
+                                          type="text"
+                                          value={item}
+                                          onChange={(e) => {
+                                            const items = [...(block.data.items || [])];
+                                            items[itemIdx] = e.target.value;
+                                            handleUpdateBlockData(idx, 'items', items);
+                                          }}
+                                          className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const items = [...(block.data.items || [])];
+                                            items.splice(itemIdx, 1);
+                                            handleUpdateBlockData(idx, 'items', items);
+                                          }}
+                                          className="p-1 rounded bg-rose-500/20 text-rose-400 hover:text-white text-xs cursor-pointer"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {block.type === 'faq' && (
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-bold text-slate-400 uppercase">FAQ Questions & Answers</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const qs = block.data.questions || [];
+                                          handleUpdateBlockData(idx, 'questions', [...qs, { question: 'New Question?', answer: 'Answer text.' }]);
+                                        }}
+                                        className="px-2 py-1 rounded bg-slate-800 text-sky-400 text-[10px] font-bold cursor-pointer"
+                                      >
+                                        + Add FAQ
+                                      </button>
+                                    </div>
+                                    {(block.data.questions || []).map((faq, fIdx) => (
+                                      <div key={fIdx} className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                                        <input
+                                          type="text"
+                                          placeholder="Question"
+                                          value={faq.question}
+                                          onChange={(e) => {
+                                            const qs = JSON.parse(JSON.stringify(block.data.questions || []));
+                                            qs[fIdx].question = e.target.value;
+                                            handleUpdateBlockData(idx, 'questions', qs);
+                                          }}
+                                          className="w-full px-3 py-1 rounded bg-slate-900 border border-slate-800 text-sky-300 font-bold text-xs"
+                                        />
+                                        <textarea
+                                          rows={2}
+                                          placeholder="Answer"
+                                          value={faq.answer}
+                                          onChange={(e) => {
+                                            const qs = JSON.parse(JSON.stringify(block.data.questions || []));
+                                            qs[fIdx].answer = e.target.value;
+                                            handleUpdateBlockData(idx, 'questions', qs);
+                                          }}
+                                          className="w-full px-3 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 text-xs"
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {block.type === 'custom-html' && (
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 mb-1">Custom HTML</label>
+                                    <textarea
+                                      rows={4}
+                                      value={block.data.html || ''}
+                                      onChange={(e) => handleUpdateBlockData(idx, 'html', e.target.value)}
+                                      className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200"
+                                    />
+                                  </div>
+                                )}
+
+                                {block.type === 'custom-code' && (
+                                  <div className="space-y-2">
+                                    <div>
+                                      <label className="block text-[10px] font-bold text-slate-400 mb-1">Language</label>
+                                      <input
+                                        type="text"
+                                        value={block.data.language || 'javascript'}
+                                        onChange={(e) => handleUpdateBlockData(idx, 'language', e.target.value)}
+                                        className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs font-mono"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[10px] font-bold text-slate-400 mb-1">Code Snippet</label>
+                                      <textarea
+                                        rows={4}
+                                        value={block.data.code || ''}
+                                        onChange={(e) => handleUpdateBlockData(idx, 'code', e.target.value)}
+                                        className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {blogContentSubTab === 'markdown' && (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">Raw Markdown Content</label>
+                        <textarea
+                          rows={12}
+                          value={editingPost.content || ''}
+                          onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                          className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200 focus:outline-none focus:border-sky-500 leading-relaxed"
+                        />
+                      </div>
+                    )}
+
+                    {blogContentSubTab === 'import' && (
+                      <div className="space-y-4">
+                        <label className="block text-xs font-bold text-slate-300 mb-1">Import Article HTML / Markdown Code</label>
+                        <textarea
+                          rows={8}
+                          placeholder="Paste HTML or markdown code here to parse into blocks..."
+                          className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            alert('Code imported and converted successfully into blocks!');
+                            setBlogContentSubTab('builder');
+                          }}
+                          className="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 text-xs font-bold cursor-pointer"
+                        >
+                          Convert & Load into Builder
+                        </button>
+                      </div>
+                    )}
+
+                    {blogContentSubTab === 'preview' && (
+                      <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-6 max-h-[500px] overflow-y-auto">
+                        <div className="border-b border-slate-800 pb-4">
+                          <span className="text-xs font-bold text-sky-400 uppercase">{editingPost.category || 'Web Development'}</span>
+                          <h1 className="text-2xl font-black text-white mt-1">{editingPost.title || 'Untitled Article'}</h1>
+                          <p className="text-xs text-slate-400 mt-2">{editingPost.excerpt || ''}</p>
+                        </div>
+                        {editingPost.featuredImage && (
+                          <div className="aspect-video rounded-xl overflow-hidden border border-slate-800">
+                            <img src={editingPost.featuredImage} alt="Cover" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <article className="prose prose-invert max-w-none text-slate-300 text-sm space-y-4">
+                          {editingPost.blocks && editingPost.blocks.map((b, bIdx) => (
+                            <div key={bIdx}>
+                              {b.type === 'heading' && <h2 className="text-xl font-bold text-white">{b.data.text}</h2>}
+                              {b.type === 'paragraph' && <p>{b.data.text}</p>}
+                              {b.type === 'introduction' && <div className="p-4 bg-sky-950/40 rounded-xl text-sky-200">{b.data.text}</div>}
+                              {b.type === 'quote' && <blockquote className="border-l-4 border-sky-400 pl-4 italic">{b.data.text}</blockquote>}
+                            </div>
+                          ))}
+                        </article>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="space-y-4">

@@ -99,12 +99,36 @@ export interface BlogComment {
 
 export type PostStatus = 'published' | 'draft' | 'scheduled';
 
+export type BlogBlockType = 'heading' | 'paragraph' | 'introduction' | 'image' | 'table' | 'quote' | 'bullet-list' | 'numbered-list' | 'faq' | 'custom-html' | 'custom-code';
+
+export interface BlogBlock {
+  id: string;
+  type: BlogBlockType;
+  data: {
+    text?: string;
+    level?: number;
+    imageUrl?: string;
+    altText?: string;
+    caption?: string;
+    link?: string;
+    alignment?: 'left' | 'center' | 'right';
+    rows?: string[][];
+    columns?: string[];
+    questions?: { question: string; answer: string }[];
+    items?: string[];
+    html?: string;
+    code?: string;
+    language?: string;
+  };
+}
+
 export interface BlogPost {
   id: string;
   title: string;
   slug: string;
   excerpt: string;
   content: string;
+  blocks?: BlogBlock[];
   featuredImage: string;
   author: {
     name: string;
