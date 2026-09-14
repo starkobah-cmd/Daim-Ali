@@ -44,10 +44,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
   ];
 
   const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (currentView !== 'main' && onNavigate) {
-      e.preventDefault();
       onNavigate('main');
     }
+    setTimeout(() => {
+      const el = document.querySelector('#home');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, currentView !== 'main' ? 100 : 0);
   };
 
   const handleBlogClick = (e: React.MouseEvent) => {
@@ -88,14 +96,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
             {navLinks.map((link) => (
               <a
                 key={link.label}
-                href={currentView === 'main' ? link.href : `#${link.href}`}
+                href={link.href}
                 onClick={(e) => {
+                  e.preventDefault();
                   if (currentView !== 'main' && onNavigate) {
                     onNavigate('main');
                     setTimeout(() => {
                       const el = document.querySelector(link.href);
                       if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
+                    }, 150);
+                  } else {
+                    const el = document.querySelector(link.href);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
                 className="text-[13px] font-semibold text-slate-700 hover:text-sky-600 px-3 py-1.5 rounded-xl hover:bg-white hover:shadow-xs transition-all duration-200 whitespace-nowrap"
@@ -133,24 +145,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
               <span>WhatsApp</span>
             </a>
 
-            <button
-              onClick={() => onOpenQuote()}
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 via-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/20 hover:shadow-lg hover:shadow-sky-500/35 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-sky-200 animate-pulse" />
-              <span>Get Started</span>
-              <ArrowUpRight className="w-4 h-4" />
-            </button>
+
           </div>
 
           {/* Mobile menu toggle */}
           <div className="flex lg:hidden items-center gap-2 shrink-0">
-            <button
-              onClick={() => onOpenQuote()}
-              className="sm:hidden inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl bg-sky-500 text-white shadow-xs"
-            >
-              Quote
-            </button>
+
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -170,11 +170,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
             {navLinks.map((link) => (
               <a
                 key={link.label}
-                href={currentView === 'main' ? link.href : `#${link.href}`}
-                onClick={() => {
+                href={link.href}
+                onClick={(e) => {
+                  e.preventDefault();
                   setMobileMenuOpen(false);
                   if (currentView !== 'main' && onNavigate) {
                     onNavigate('main');
+                    setTimeout(() => {
+                      const el = document.querySelector(link.href);
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 150);
+                  } else {
+                    const el = document.querySelector(link.href);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
                 className="text-sm font-medium text-slate-700 hover:text-sky-600 p-2 rounded-md hover:bg-sky-50 transition-colors whitespace-nowrap"
@@ -206,16 +214,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuote, currentView = 'main
               <span>Message Netronomic Web on WhatsApp</span>
             </a>
             
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenQuote();
-              }}
 
-              className="w-full text-center text-sm font-semibold py-2.5 rounded-xl bg-sky-500 text-white shadow-md"
-            >
-              Get Started / Contact Us
-            </button>
 
             {onNavigate && (
               <button

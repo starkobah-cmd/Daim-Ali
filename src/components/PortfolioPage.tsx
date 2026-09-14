@@ -44,17 +44,17 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({ items = [], onSele
           >
             All Projects
           </button>
-          {PORTFOLIO_CATEGORIES.map(category => (
+          {PORTFOLIO_CATEGORIES.map(cat => (
             <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
               className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${
-                activeCategory === category 
+                activeCategory === cat.id 
                   ? 'bg-sky-600 text-white shadow-md' 
                   : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
               }`}
             >
-              {category}
+              {cat.label}
             </button>
           ))}
         </div>

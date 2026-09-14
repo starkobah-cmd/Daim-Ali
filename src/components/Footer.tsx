@@ -73,18 +73,13 @@ export const Footer: React.FC<FooterProps> = ({ onOpenQuote, onNavigate, siteCon
                 href="https://wa.me/923020487103"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="whatsapp-shine-btn inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white border border-emerald-400/40 shadow-lg shadow-emerald-500/25 text-xs font-semibold hover:shadow-emerald-500/40 transition-all flex-col items-start w-fit cursor-pointer group"
-                title="Message Netronomic Web on WhatsApp"
-                aria-label="Message Netronomic Web on WhatsApp"
+                className="whatsapp-shine-btn inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white border border-emerald-400/40 shadow-lg shadow-emerald-500/25 text-xs font-semibold hover:shadow-emerald-500/40 transition-all w-fit cursor-pointer group"
+                title="Message Netronomic on WhatsApp"
+                aria-label="Message Netronomic on WhatsApp"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-white animate-ping group-hover:animate-none" />
-                  <MessageSquare className="w-4 h-4 text-white" />
-                  <span className="font-bold text-sm">Message Netronomic Web on WhatsApp</span>
-                </div>
-                <span className="text-[11px] font-mono text-emerald-100 opacity-90 pl-6">
-                  https://wa.me/923020487103
-                </span>
+                <span className="w-2 h-2 rounded-full bg-white animate-ping group-hover:animate-none shrink-0" />
+                <MessageSquare className="w-4 h-4 text-white shrink-0" />
+                <span className="font-bold text-sm">Message Netronomic on WhatsApp</span>
               </a>
               
               {/* Social Links */}
@@ -127,13 +122,15 @@ export const Footer: React.FC<FooterProps> = ({ onOpenQuote, onNavigate, siteCon
               <li><button onClick={() => onNavigate && onNavigate('blog-list')} className="text-sky-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"><span>★ Blog & Articles</span></button></li>
               <li><a href="#services" className="hover:text-sky-400 transition-colors">Our Services</a></li>
               <li><a href="#about" className="hover:text-sky-400 transition-colors">About Us</a></li>
+              <li><a href="#contact" className="hover:text-sky-400 transition-colors">Contact Us</a></li>
+              <li><a href="#privacy" className="hover:text-sky-400 transition-colors">Privacy Policy</a></li>
+              <li><a href="#terms" className="hover:text-sky-400 transition-colors">Terms of Service</a></li>
               <li><a href="#why-us" className="hover:text-sky-400 transition-colors">Why Choose Us</a></li>
               <li><a href="#process" className="hover:text-sky-400 transition-colors">Our 6-Step Process</a></li>
               <li><a href="#portfolio" className="hover:text-sky-400 transition-colors">Portfolio Showcase</a></li>
               <li><a href="#pricing" className="hover:text-sky-400 transition-colors">Pricing Packages</a></li>
               <li><a href="#testimonials" className="hover:text-sky-400 transition-colors">Testimonials</a></li>
               <li><a href="#faq" className="hover:text-sky-400 transition-colors">FAQ</a></li>
-              <li><a href="#contact" className="hover:text-sky-400 transition-colors">Contact Us</a></li>
             </ul>
           </div>
 
@@ -159,11 +156,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenQuote, onNavigate, siteCon
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} {activeAgency.name}. Sky Blue & White Professional Studio.</p>
-          <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-sky-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-sky-400 transition-colors">Terms of Service</a>
-            <a href="#contact" className="hover:text-sky-400 transition-colors">Support</a>
+          <p>© 2026 Netronomic. All rights reserved.</p>
+          <div className="flex items-center gap-4 flex-wrap">
+            <a href="#about" className="hover:text-sky-400 transition-colors">About Us</a>
+            <a href="#contact" className="hover:text-sky-400 transition-colors">Contact Us</a>
+            <a href="#privacy" className="hover:text-sky-400 transition-colors">Privacy Policy</a>
+            <a href="#terms" className="hover:text-sky-400 transition-colors">Terms of Service</a>
           </div>
         </div>
       </div>

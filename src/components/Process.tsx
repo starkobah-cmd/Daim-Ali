@@ -98,7 +98,7 @@ export const Process: React.FC = () => {
               </div>
 
               <h3 className="text-xl font-bold text-slate-900">
-                {step.number}. {step.title}
+                {step.title}
               </h3>
 
               <p className="text-sm text-slate-600 leading-relaxed">

@@ -12,7 +12,7 @@ interface HeroProps {
 
 const DEFAULT_PHRASES = [
   'Website Development',
-  'Logo Design',
+  'Logo & Poster Design',
   'Viral Video Reels',
   'Google SEO',
   'SEO Backlinks',
@@ -71,8 +71,26 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
     primaryCtaText: 'Get Started Today',
     secondaryCtaText: 'Explore Our Services',
   };
+
+  const [tiltStyle, setTiltStyle] = useState({ transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg)' });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    const rotateX = (-y / 20).toFixed(2);
+    const rotateY = (x / 20).toFixed(2);
+    setTiltStyle({
+      transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTiltStyle({ transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)' });
+  };
+
   return (
-    <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden bg-gradient-to-b from-sky-50/70 via-white to-sky-50/30">
+    <section id="home" className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden bg-gradient-to-b from-sky-50/70 via-white to-sky-50/30">
       {/* Background Decorative Sky Blue Glows & Grid */}
       <div className="absolute inset-0 bg-[radial-gradient(#0284c7_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-sky-300/20 blur-[120px] rounded-full pointer-events-none" />
@@ -87,6 +105,12 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
             transition={{ duration: 0.7, ease: 'easeOut' }}
             className="lg:col-span-7 space-y-6 text-center lg:text-left"
           >
+            {/* Top Subtitle / Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/80 border border-sky-200/60 text-sky-700 text-xs sm:text-sm font-semibold">
+              <Sparkles className="w-4 h-4 text-sky-500" />
+              <span>Netronomic - Exploring Modern Tech & Web Development</span>
+            </div>
+
             {/* Main Heading with Animated Typing Effect */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.18] min-h-[110px] sm:min-h-[135px] flex flex-col justify-start">
               <span>{heroData.titlePrefix}</span>
@@ -122,7 +146,7 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onGetStarted}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-sky-500 via-sky-600 to-cyan-600 text-white font-bold text-base shadow-xl shadow-sky-500/30 hover:shadow-2xl hover:shadow-sky-500/40 transition-all cursor-pointer group"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-sky-500 via-sky-600 to-cyan-600 text-white font-bold text-base shadow-xl shadow-sky-500/30 hover:shadow-2xl hover:shadow-sky-500/40 transition-all cursor-pointer group btn-shimmer"
               >
                 <span>{heroData.primaryCtaText || 'Get Started Now'}</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
@@ -182,9 +206,14 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
               <span>100% Quality Guaranteed</span>
             </motion.div>
 
-            <div className="relative mx-auto max-w-md lg:max-w-none">
+            <div 
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={{ ...tiltStyle, willChange: 'transform' }}
+              className="relative mx-auto max-w-md lg:max-w-none transition-transform duration-100 ease-out cursor-pointer"
+            >
               {/* Outer Decorative Ring */}
-              <div className="absolute -inset-1.5 bg-gradient-to-r from-sky-400 to-cyan-300 rounded-3xl blur-md opacity-40 animate-pulse" />
+              <div className="absolute -inset-1.5 bg-gradient-to-r from-sky-400 to-cyan-300 rounded-3xl blur-md opacity-40 animate-pulse pointer-events-none" />
 
               {/* Card Surface */}
               <div className="relative bg-white rounded-2xl border border-sky-100 shadow-xl overflow-hidden p-6 space-y-6">
@@ -197,7 +226,7 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted, onExploreServices, sit
                     <div className="w-3 h-3 rounded-full bg-emerald-400" />
                   </div>
                   <span className="text-[11px] font-mono text-sky-600 font-semibold bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
-                    netronomicweb.com
+                    netronomic.com
                   </span>
                 </div>
 

@@ -56,15 +56,14 @@ const packages: PackagePlan[] = [
     borderColor: 'border-slate-800 hover:border-sky-500/50',
     features: [
       'Website Design & Dev (3-5 Pages)',
-      'Logo Design (1 Vector Concept)',
-      'Poster & Graphic Design (2 Posters)',
+      'Logo & Poster Design (1 Vector Concept & 2 Posters)',
       'Basic On-Page SEO Setup',
       'Blog Article (1x 1,000 words)',
       '10 High-DA Profile Backlinks',
       '1 Week Free Technical Support'
     ],
     notIncluded: [
-      'Information Reel Editing',
+      'Short-Form Viral Reels',
       'Social Media Backlinks Campaign'
     ]
   },
@@ -84,7 +83,6 @@ const packages: PackagePlan[] = [
     features: [
       'Custom React/Next Website (Up to 10 Pages)',
       '3 Logo Variations & Style Guide Sheet',
-      '5 Eye-Catching Social Media Posters',
       '3 Edited Reels with Kinetic Captions',
       'Blog & Content Writing (3x Articles)',
       'Full Technical SEO Audit & Keyword Plan',
@@ -108,8 +106,7 @@ const packages: PackagePlan[] = [
     features: [
       'Full Custom Web App & E-Commerce Portal',
       'Unlimited Logo Revisions + Complete Branding Kit',
-      '10 Premium Posters & Promotional Graphics',
-      '8 Viral Information Reels / Video Edits',
+      '8 Short-Form Viral Reels',
       '8 High-Authority SEO Articles (1,500+ words)',
       'Complete SEO Suite (On-Page + Technical + Audit)',
       '100 Manual High-DA Profile Backlinks',
@@ -136,25 +133,18 @@ const comparisonData: ComparisonRow[] = [
     premium: 'Full Web App & E-Commerce'
   },
   {
-    serviceName: 'Logo Design',
+    serviceName: 'Logo & Poster Design',
     icon: Palette,
-    basic: '1 Concept',
-    standard: '3 Concepts + Brand Guide',
-    premium: 'Unlimited + Complete Brand Kit'
+    basic: '1 Concept + 2 Posters',
+    standard: '3 Concepts + Posters & Guide',
+    premium: 'Unlimited + Posters & Brand Kit'
   },
   {
-    serviceName: 'Poster Design',
-    icon: ImageIcon,
-    basic: '2 Posters',
-    standard: '5 Social Posters',
-    premium: '10 Premium Posters/Banners'
-  },
-  {
-    serviceName: 'Information Reel Editing',
+    serviceName: 'Short-Form Viral Reels',
     icon: Video,
     basic: false,
     standard: '3 Reels with Captions',
-    premium: '8 Viral Video Reels'
+    premium: '8 Short-Form Viral Reels'
   },
 
   {
@@ -293,11 +283,10 @@ export const Pricing: React.FC<PricingProps> = ({ onSelectPlan }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.15 }}
-                whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                className={`relative rounded-3xl p-8 flex flex-col justify-between backdrop-blur-xl transition-all duration-300 ${
+                className={`relative rounded-3xl p-8 flex flex-col justify-between backdrop-blur-xl pricing-card-hover ${
                   pkg.isPopular
-                    ? 'bg-gradient-to-b from-[#0F172A] via-[#0B1120] to-[#070D1B] border-2 border-sky-400 shadow-[0_0_40px_rgba(56,189,248,0.25)] lg:-translate-y-2 z-20'
-                    : 'bg-[#0B1120]/80 border border-slate-800/80 hover:border-sky-500/40 hover:shadow-[0_0_30px_rgba(56,189,248,0.15)]'
+                    ? 'bg-gradient-to-b from-[#0F172A] via-[#0B1120] to-[#070D1B] border-2 border-sky-400 shadow-[0_0_40px_rgba(56,189,248,0.25)] lg:-translate-y-2 z-25'
+                    : 'bg-[#0B1120]/80 border border-slate-800/80 hover:border-sky-500/40'
                 }`}
               >
                 {/* Glow Backdrop overlay */}
@@ -305,8 +294,8 @@ export const Pricing: React.FC<PricingProps> = ({ onSelectPlan }) => {
 
                 {/* Top Badge */}
                 {pkg.badge && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30">
-                    <span className={`px-4 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 ${
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30 whitespace-nowrap">
+                    <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 ${
                       pkg.badgeType === 'luxury'
                         ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 border border-amber-200 shadow-amber-500/20'
                         : 'bg-gradient-to-r from-sky-400 via-blue-500 to-cyan-400 text-slate-950 border border-sky-200 shadow-sky-500/30'
@@ -380,11 +369,11 @@ export const Pricing: React.FC<PricingProps> = ({ onSelectPlan }) => {
                     ))}
 
                     {pkg.notIncluded && pkg.notIncluded.map((notFeat, i) => (
-                      <div key={i} className="flex items-start gap-3 text-xs sm:text-sm text-slate-500 opacity-60">
-                        <div className="p-0.5 rounded-full bg-slate-800 text-slate-500 mt-0.5 shrink-0">
+                      <div key={i} className="flex items-start gap-3 text-xs sm:text-sm text-slate-400 opacity-95">
+                        <div className="p-0.5 rounded-full bg-slate-800 text-slate-400 mt-0.5 shrink-0 border border-slate-700">
                           <X className="w-3.5 h-3.5" />
                         </div>
-                        <span className="line-through">{notFeat}</span>
+                        <span className="line-through font-medium">{notFeat}</span>
                       </div>
                     ))}
                   </div>
@@ -394,7 +383,7 @@ export const Pricing: React.FC<PricingProps> = ({ onSelectPlan }) => {
                 <div className="pt-4 mt-auto">
                   <button
                     onClick={() => onSelectPlan(`${pkg.name} Package (${billingCycle})`)}
-                    className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg relative group overflow-hidden ${
+                    className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg relative group overflow-hidden btn-shimmer ${
                       pkg.isPopular
                         ? 'bg-gradient-to-r from-sky-500 via-blue-600 to-cyan-500 text-white shadow-sky-500/25 hover:shadow-sky-500/40 hover:scale-[1.02]'
                         : 'bg-slate-800/90 text-white hover:bg-sky-600 hover:text-white border border-slate-700/80 hover:border-sky-400'
@@ -416,7 +405,7 @@ export const Pricing: React.FC<PricingProps> = ({ onSelectPlan }) => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative rounded-3xl p-8 sm:p-12 md:p-16 bg-gradient-to-r from-sky-950/60 via-blue-950/40 to-slate-900/90 border border-sky-500/30 backdrop-blur-2xl text-center shadow-[0_0_50px_rgba(56,189,248,0.15)] overflow-hidden"
+          className="relative rounded-3xl p-8 sm:p-12 md:p-16 bg-gradient-to-r from-sky-950/60 via-blue-950/40 to-slate-900/90 border border-sky-500/30 backdrop-blur-2xl text-center shadow-[0_0_50px_rgba(56,189,248,0.15)] overflow-hidden mt-16"
         >
           {/* Ambient Glow Orbs */}
           <div className="absolute -top-24 -left-24 w-64 h-64 bg-sky-500/20 rounded-full blur-3xl pointer-events-none" />

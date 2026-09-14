@@ -10,9 +10,9 @@ export const INITIAL_BLOG_POSTS: BlogPost[] = [
     excerpt: 'Discover modern UI/UX design patterns, lightning-fast performance tweaks, and subtle conversion triggers that transform casual visitors into high-paying clients.',
     featuredImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
     author: {
-      name: 'Alex Vance',
+      name: 'Daim Ali',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      role: 'Lead UI/UX Architect'
+      role: 'Lead Agency Architect'
     },
     category: 'Web Development',
     tags: ['Web Design', 'Conversion Optimization', 'React', 'UI/UX'],
@@ -119,9 +119,9 @@ Building a world-class website requires combining **psychological conversion tri
     excerpt: 'Uncover how high-DA manual profile backlinks and strategic social signals establish domain authority, accelerate indexing, and boost SERP rankings.',
     featuredImage: 'https://images.unsplash.com/photo-1557838923-2985c318be48?auto=format&fit=crop&w=1200&q=80',
     author: {
-      name: 'Sarah Jenkins',
+      name: 'Netronomic Editorial',
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
-      role: 'Senior SEO Strategist'
+      role: 'SEO & Growth Strategy Team'
     },
     category: 'SEO & Backlinks',
     tags: ['SEO', 'Backlinks', 'Link Building', 'Google Ranking'],
@@ -202,7 +202,7 @@ At Netronomic Web, every backlink campaign undergoes strict manual curation:
     excerpt: 'Step-by-step editing frameworks for TikTok, Instagram Reels, and YouTube Shorts that hook viewers in the first 2 seconds and skyrocket retention.',
     featuredImage: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1200&q=80',
     author: {
-      name: 'Rohan Malik',
+      name: 'Daim Ali',
       avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=200&q=80',
       role: 'Creative Video Director'
     },
@@ -265,9 +265,9 @@ Our video editing team handles raw video footage and returns polished, broadcast
     excerpt: 'Why off-the-shelf logo templates ruin brand trust and how a bespoke visual identity system drives long-term customer loyalty.',
     featuredImage: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=1200&q=80',
     author: {
-      name: 'Sophia Sterling',
+      name: 'Netronomic Editorial',
       avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
-      role: 'Brand Identity Strategist'
+      role: 'Brand Identity Strategy Team'
     },
     category: 'UI/UX Design',
     tags: ['Branding', 'Logo Design', 'Graphic Design', 'Brand Strategy'],

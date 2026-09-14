@@ -104,7 +104,7 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService, onRequestQu
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
-              className={`rounded-2xl border p-6 shadow-sm transition-all duration-300 flex flex-col justify-between group relative overflow-hidden ${
+              className={`rounded-2xl border p-6 shadow-sm spotlight-card flex flex-col justify-between group relative overflow-hidden ${
                 service.badge === 'Coming Soon'
                   ? 'bg-slate-50/70 border-dashed border-slate-300 opacity-85 hover:opacity-100'
                   : 'bg-white border-sky-100 hover:shadow-xl hover:border-sky-300'
@@ -169,10 +169,10 @@ export const Services: React.FC<ServicesProps> = ({ onSelectService, onRequestQu
 
                   <button
                     onClick={() => onRequestQuoteForService(service.title)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold shadow-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold shadow-xs transition-colors btn-shimmer group/btn cursor-pointer"
                   >
                     <span>Request</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </div>

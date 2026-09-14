@@ -57,12 +57,20 @@ export const BlogListing: React.FC<BlogListingProps> = ({
     });
   }, [publishedPosts, selectedCategory, searchTerm]);
 
+  // Grid list (exclude featured post on page 1 when 'All' category and no search)
+  const gridPostsRaw = useMemo(() => {
+    if (currentPage === 1 && !searchTerm && selectedCategory === 'All' && featuredPost) {
+      return filteredPosts.filter(p => p.id !== featuredPost.id);
+    }
+    return filteredPosts;
+  }, [filteredPosts, currentPage, searchTerm, selectedCategory, featuredPost]);
+
   // Pagination calculation
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage) || 1;
+  const totalPages = Math.ceil(gridPostsRaw.length / postsPerPage) || 1;
   const paginatedPosts = useMemo(() => {
     const start = (currentPage - 1) * postsPerPage;
-    return filteredPosts.slice(start, start + postsPerPage);
-  }, [filteredPosts, currentPage]);
+    return gridPostsRaw.slice(start, start + postsPerPage);
+  }, [gridPostsRaw, currentPage]);
 
   return (
     <div className="pt-24 pb-20 bg-[#050816] text-white min-h-screen relative overflow-hidden">

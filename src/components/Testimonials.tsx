@@ -17,7 +17,7 @@ export const Testimonials: React.FC = () => {
             Client Reviews & <span className="text-sky-600">Real Success Stories</span>
           </h2>
           <p className="text-base sm:text-lg text-slate-600">
-            Hear directly from business leaders, brand founders, and marketing directors who trust Skyline Digital.
+            Hear directly from business leaders, brand founders, and marketing directors who trust Netronomic.
           </p>
         </div>
 

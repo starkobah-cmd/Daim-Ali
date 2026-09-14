@@ -266,7 +266,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     titlePrefix: 'Accelerate Your Brand with',
     typingPhrases: [
       'Website Development',
-      'Logo Design',
+      'Logo & Poster Design',
       'Viral Video Reels',
       'Google SEO',
       'SEO Backlinks',

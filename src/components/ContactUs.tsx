@@ -331,7 +331,7 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+91 98765 43210"
+                      placeholder="+92 300 1234567"
                       className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:bg-white transition-all"
                     />
                   </div>
@@ -344,7 +344,7 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
                     <select
                       value={formData.service}
                       onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:bg-white transition-all font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:bg-white transition-all font-medium truncate pr-8"
                     >
                       {servicesData.map((s) => (
                         <option key={s.id} value={s.title}>
