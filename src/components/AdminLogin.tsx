@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowLeft, KeyRound, CheckCircle2, AlertCircle, Sparkles, Unlock, Mail, RefreshCw, HelpCircle, X } from 'lucide-react';
-import { verifyAdminLogin, resetPasswordWithKey } from '../utils/auth';
+import { verifyAdminLogin } from '../utils/auth';
 
 interface AdminLoginProps {
   onLoginSuccess: () => void;
@@ -9,42 +9,105 @@ interface AdminLoginProps {
   brandName?: string;
 }
 
+const FAILED_ATTEMPTS_KEY = 'netronomic_failed_logins';
+const LOCKOUT_UNTIL_KEY = 'netronomic_lockout_until';
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackToSite, brandName = 'NETRONOMIC' }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
+  // Rate Limiting & Lockout State
+  const [failedAttempts, setFailedAttempts] = useState<number>(() => {
+    const saved = localStorage.getItem(FAILED_ATTEMPTS_KEY);
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  const [lockoutUntil, setLockoutUntil] = useState<number>(() => {
+    const saved = localStorage.getItem(LOCKOUT_UNTIL_KEY);
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  const [remainingLockoutSeconds, setRemainingLockoutSeconds] = useState<number>(0);
+
   // Forgot Password Modal State
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotIdentifier, setForgotIdentifier] = useState('');
-  const [newResetPassword, setNewResetPassword] = useState('');
-  const [showResetPassword, setShowResetPassword] = useState(false);
-  const [resetSuccess, setResetSuccess] = useState('');
-  const [resetError, setResetError] = useState('');
-  const [isResetting, setIsResetting] = useState(false);
+
+  // Timer for lockout countdown
+  useEffect(() => {
+    if (lockoutUntil > Date.now()) {
+      const interval = setInterval(() => {
+        const diff = Math.ceil((lockoutUntil - Date.now()) / 1000);
+        if (diff <= 0) {
+          setLockoutUntil(0);
+          setFailedAttempts(0);
+          localStorage.removeItem(LOCKOUT_UNTIL_KEY);
+          localStorage.removeItem(FAILED_ATTEMPTS_KEY);
+          setRemainingLockoutSeconds(0);
+          clearInterval(interval);
+        } else {
+          setRemainingLockoutSeconds(diff);
+        }
+      }, 1000);
+      setRemainingLockoutSeconds(Math.ceil((lockoutUntil - Date.now()) / 1000));
+      return () => clearInterval(interval);
+    }
+  }, [lockoutUntil]);
+
+  const formatTime = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
-    if (!identifier.trim() || !password) {
+
+    // Check if currently locked out
+    if (lockoutUntil > Date.now()) {
+      return;
+    }
+
+    const trimmedIdentifier = identifier.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedIdentifier || !trimmedPassword) {
       setErrorMsg('Please enter your username/email and password.');
       return;
     }
 
     setIsLoading(true);
     try {
-      const result = await verifyAdminLogin(identifier, password, false);
+      const result = await verifyAdminLogin(trimmedIdentifier, trimmedPassword, rememberMe);
       if (result.success) {
+        // Reset failed attempts on success
+        localStorage.removeItem(FAILED_ATTEMPTS_KEY);
+        localStorage.removeItem(LOCKOUT_UNTIL_KEY);
+        setFailedAttempts(0);
+        setLockoutUntil(0);
+
         setIsUnlocked(true);
-        // Show glowing logo animation before calling onLoginSuccess
         setTimeout(() => {
           onLoginSuccess();
         }, 1600);
       } else {
-        setErrorMsg(result.error || 'Invalid credentials. Please try again.');
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        localStorage.setItem(FAILED_ATTEMPTS_KEY, newAttempts.toString());
+
+        if (newAttempts >= MAX_ATTEMPTS) {
+          const lockoutTime = Date.now() + LOCKOUT_DURATION_MS;
+          setLockoutUntil(lockoutTime);
+          localStorage.setItem(LOCKOUT_UNTIL_KEY, lockoutTime.toString());
+          setErrorMsg(`Too many failed attempts. Login locked for 15:00 minutes for security.`);
+        } else {
+          setErrorMsg(result.error || `Invalid credentials. ${MAX_ATTEMPTS - newAttempts} attempts remaining before temporary lockout.`);
+        }
         setIsLoading(false);
       }
     } catch (err) {
@@ -53,42 +116,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
     }
   };
 
-  
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResetError('');
-    setResetSuccess('');
-
-    if (!forgotIdentifier.trim() || !newResetPassword) {
-      setResetError('Please enter your username/email and new password.');
-      return;
-    }
-
-    if (newResetPassword.length < 6) {
-      setResetError('New password must be at least 6 characters long.');
-      return;
-    }
-
-    setIsResetting(true);
-    try {
-      const res = await resetPasswordWithKey(forgotIdentifier, newResetPassword);
-      if (res.success) {
-        setResetSuccess(res.message);
-        setIdentifier(forgotIdentifier);
-        setPassword(newResetPassword);
-        setTimeout(() => {
-          setShowForgotModal(false);
-          setResetSuccess('');
-        }, 2000);
-      } else {
-        setResetError(res.message);
-      }
-    } catch (err) {
-      setResetError('Failed to reset password.');
-    } finally {
-      setIsResetting(false);
-    }
-  };
+  const isLockedOut = lockoutUntil > Date.now();
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans selection:bg-sky-500 selection:text-white relative overflow-hidden">
@@ -107,7 +135,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="w-full max-w-md text-center p-8 bg-slate-900/90 border border-sky-500/30 rounded-3xl backdrop-blur-xl shadow-2xl shadow-sky-500/20 relative z-20 space-y-6 overflow-hidden"
           >
-            {/* Radiant Glowing Background Pulse */}
             <motion.div
               animate={{
                 scale: [1, 1.4, 1.2],
@@ -121,7 +148,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
               className="absolute inset-0 bg-gradient-to-r from-sky-500/20 via-cyan-500/20 to-blue-500/20 blur-2xl pointer-events-none"
             />
 
-            {/* Logo Icon Animated Burst */}
             <div className="relative z-10 flex justify-center py-4">
               <motion.div
                 initial={{ scale: 0.5, rotate: -45 }}
@@ -140,7 +166,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                   </div>
                 </div>
 
-                {/* Floating Sparkles */}
                 <motion.div
                   animate={{ scale: [1, 1.3, 1], rotate: 360 }}
                   transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
@@ -159,7 +184,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
               </motion.div>
             </div>
 
-            {/* Unlocking Text & Status */}
             <div className="relative z-10 space-y-2">
               <motion.span
                 initial={{ opacity: 0, y: 10 }}
@@ -189,7 +213,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
               </motion.p>
             </div>
 
-            {/* Animated Loading Bar */}
             <div className="relative z-10 pt-2">
               <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
                 <motion.div
@@ -232,8 +255,22 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
               </div>
             </div>
 
-            {/* Error Alert */}
-            {errorMsg && (
+            {/* Error or Lockout Alert */}
+            {isLockedOut ? (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2.5"
+              >
+                <AlertCircle className="w-5 h-5 shrink-0 text-rose-400 animate-pulse" />
+                <div>
+                  <p className="font-bold">Too many failed attempts.</p>
+                  <p className="text-[11px] mt-0.5">
+                    Login locked for <span className="font-mono underline">{formatTime(remainingLockoutSeconds)}</span> minutes for security.
+                  </p>
+                </div>
+              </motion.div>
+            ) : errorMsg ? (
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -242,7 +279,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
                 <span>{errorMsg}</span>
               </motion.div>
-            )}
+            ) : null}
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -256,8 +293,9 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                     type="text"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="admin or admin@example.com"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-semibold placeholder:text-slate-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                    placeholder="Authorized email or username"
+                    disabled={isLockedOut}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-semibold placeholder:text-slate-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all disabled:opacity-50"
                     autoComplete="username"
                   />
                 </div>
@@ -270,10 +308,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                   </label>
                   <button
                     type="button"
-                    onClick={() => {
-                      setForgotIdentifier(identifier);
-                      setShowForgotModal(true);
-                    }}
+                    onClick={() => setShowForgotModal(true)}
                     className="text-[11px] font-bold text-sky-400 hover:text-sky-300 transition-colors cursor-pointer"
                   >
                     Forgot Password?
@@ -286,7 +321,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter admin password"
-                    className="w-full pl-10 pr-10 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-semibold placeholder:text-slate-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                    disabled={isLockedOut}
+                    className="w-full pl-10 pr-10 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-semibold placeholder:text-slate-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all disabled:opacity-50"
                     autoComplete="current-password"
                   />
                   <button
@@ -299,13 +335,30 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                 </div>
               </div>
 
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center gap-2.5 pt-1">
+                <input
+                  type="checkbox"
+                  id="rememberMeCheckbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={isLockedOut}
+                  className="w-4 h-4 rounded bg-slate-950 border-slate-800 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900 cursor-pointer disabled:opacity-50"
+                />
+                <label htmlFor="rememberMeCheckbox" className="text-xs text-slate-300 font-medium cursor-pointer select-none">
+                  Remember this device (Keep signed in for 7 days)
+                </label>
+              </div>
+
               <button
                 type="submit"
-                disabled={isLoading}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-slate-950 font-black text-xs shadow-lg shadow-sky-500/25 hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={isLoading || isLockedOut}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-slate-950 font-black text-xs shadow-lg shadow-sky-500/25 hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <span>Authenticating...</span>
+                ) : isLockedOut ? (
+                  <span>Locked ({formatTime(remainingLockoutSeconds)})</span>
                 ) : (
                   <>
                     <KeyRound className="w-4 h-4" />
@@ -339,7 +392,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
         )}
       </AnimatePresence>
 
-      {/* Forgot Password Modal */}
+      {/* Forgot Password Action Modal */}
       <AnimatePresence>
         {showForgotModal && (
           <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -347,92 +400,43 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
-              className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 relative"
+              className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative"
             >
               <button
                 onClick={() => setShowForgotModal(false)}
-                className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-white bg-slate-800/50 cursor-pointer"
+                className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-white bg-slate-800/50 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sky-400">
-                  <RefreshCw className="w-5 h-5" />
+                <div className="p-3 rounded-2xl bg-sky-500/15 border border-sky-500/30 text-sky-400">
+                  <HelpCircle className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Reset Password</h3>
-                  <p className="text-xs text-slate-400">Enter your email to set a new password.</p>
+                  <h3 className="text-lg font-bold text-white tracking-tight">Password Reset Security</h3>
+                  <p className="text-xs text-slate-400">Administrator verification protocol</p>
                 </div>
               </div>
 
-              {resetError && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>{resetError}</span>
-                </div>
-              )}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed space-y-3">
+                <p>
+                  For security reasons, password resets must be verified via your registered recovery email or manual environment configuration.
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  If you need emergency access recovery, please contact your systems administrator or verify credentials in your server environment variables.
+                </p>
+              </div>
 
-              {resetSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>{resetSuccess}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="text"
-                    value={forgotIdentifier}
-                    onChange={(e) => setForgotIdentifier(e.target.value)}
-                    placeholder="email@example.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">
-                    New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showResetPassword ? 'text' : 'password'}
-                      value={newResetPassword}
-                      onChange={(e) => setNewResetPassword(e.target.value)}
-                      placeholder="At least 6 characters"
-                      className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowResetPassword(!showResetPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer"
-                    >
-                      {showResetPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotModal(false)}
-                    className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isResetting}
-                    className="flex-1 py-2.5 rounded-xl bg-sky-500 text-slate-950 font-bold text-xs hover:bg-sky-400 transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {isResetting ? 'Resetting...' : 'Update Password'}
-                  </button>
-                </div>
-              </form>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-slate-950 font-bold text-xs hover:brightness-110 transition-all cursor-pointer shadow-lg shadow-sky-500/20"
+                >
+                  Back to Login
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
@@ -440,5 +444,3 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
     </div>
   );
 };
-
-

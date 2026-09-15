@@ -21,6 +21,10 @@ export interface HeadMetaConfig {
   ogImage?: string;
   canonicalUrl?: string;
   googleSiteVerification?: string;
+  customSchema?: string;
+  allowIndexing?: boolean;
+  headerScripts?: string;
+  faviconUrl?: string;
 }
 
 export function applyHeadMeta({
@@ -29,7 +33,11 @@ export function applyHeadMeta({
   keywords,
   ogImage,
   canonicalUrl,
-  googleSiteVerification
+  googleSiteVerification,
+  customSchema,
+  allowIndexing,
+  headerScripts,
+  faviconUrl
 }: HeadMetaConfig) {
   if (typeof document === 'undefined') return;
 
@@ -58,6 +66,45 @@ export function applyHeadMeta({
     setOrUpdateMeta('name', 'google-site-verification', googleSiteVerification);
   }
 
+  if (allowIndexing !== undefined) {
+    const robotsContent = allowIndexing ? 'index, follow' : 'noindex, nofollow';
+    setOrUpdateMeta('name', 'robots', robotsContent);
+  }
+
+  if (faviconUrl) {
+    let favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
+    if (!favicon) {
+      favicon = document.createElement('link');
+      favicon.setAttribute('rel', 'icon');
+      document.head.appendChild(favicon);
+    }
+    favicon.setAttribute('href', faviconUrl);
+  }
+
+  if (headerScripts !== undefined) {
+    let scriptContainer = document.querySelector('div#dynamic-header-scripts-container') as HTMLDivElement | null;
+    if (!scriptContainer) {
+      scriptContainer = document.createElement('div');
+      scriptContainer.id = 'dynamic-header-scripts-container';
+      document.head.appendChild(scriptContainer);
+    }
+    scriptContainer.innerHTML = '';
+    if (headerScripts.trim()) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = headerScripts;
+      Array.from(tempDiv.children).forEach(child => {
+        if (child.tagName === 'SCRIPT') {
+          const newScript = document.createElement('script');
+          Array.from(child.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+          newScript.textContent = child.textContent;
+          scriptContainer?.appendChild(newScript);
+        } else {
+          scriptContainer?.appendChild(child.cloneNode(true));
+        }
+      });
+    }
+  }
+
   if (canonicalUrl) {
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!canonical) {
@@ -66,5 +113,16 @@ export function applyHeadMeta({
       document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', canonicalUrl);
+  }
+
+  if (customSchema) {
+    let scriptTag = document.querySelector('script#dynamic-json-ld') as HTMLScriptElement | null;
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.id = 'dynamic-json-ld';
+      scriptTag.type = 'application/ld+json';
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = customSchema;
   }
 }

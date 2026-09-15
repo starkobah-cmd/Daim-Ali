@@ -71,6 +71,9 @@ export const AdminMediaManager: React.FC = () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (!file.type.startsWith('image/')) continue;
+        if (file.size > 2 * 1024 * 1024) {
+          alert(`Note: "${file.name}" exceeds 2MB (${formatFileSize(file.size)}). Compressed version will be stored for instant site loading.`);
+        }
         const processed = await processFileToMediaItem(file, 'image');
         newItems.unshift(processed);
       }
@@ -193,13 +196,13 @@ export const AdminMediaManager: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <h1 className="text-2xl font-black text-white flex items-center gap-2">
-            <span>WordPress-Style Media Library</span>
+            <span>Netronomic Asset & Media Manager</span>
             <span className="text-[10px] bg-sky-500/20 text-sky-400 border border-sky-400/30 px-2.5 py-0.5 rounded-full font-bold uppercase">
               CMS v2.4 Storage
             </span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Centralized media asset hub. Upload images, select assets for posts and branding, edit alt tags, and copy asset URLs.
+            Centralized cloud asset hub. Upload images, select assets for posts and branding, manage SEO alt tags, and copy CDN URLs.
           </p>
         </div>
 
@@ -447,9 +450,14 @@ export const AdminMediaManager: React.FC = () => {
                     onClick={() => {
                       navigator.clipboard.writeText(selectedItem.url);
                       setCopiedId(selectedItem.id);
-                      setTimeout(() => setCopiedId(''), 2000);
+                      setToastMsg('Asset URL copied to clipboard!');
+                      setTimeout(() => {
+                        setCopiedId('');
+                        setToastMsg('');
+                      }, 2000);
                     }}
-                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors"
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                    title="Copy Asset URL"
                   >
                     {copiedId === selectedItem.id ? 'Copied' : <Copy className="w-3.5 h-3.5" />}
                   </button>

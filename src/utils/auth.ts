@@ -225,7 +225,10 @@ export async function getStoredAdminUsers(): Promise<AdminUser[]> {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        const sanitized = parsed.filter((u: AdminUser) => u.username.toLowerCase() !== 'admin' && u.email.toLowerCase() !== 'admin@example.com');
+        if (sanitized.length > 0) {
+          return sanitized;
+        }
       }
     }
   } catch {}

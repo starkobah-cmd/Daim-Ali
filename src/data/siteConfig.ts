@@ -9,6 +9,7 @@ export interface SiteLogoConfig {
   showTagline: boolean;
   customLogoUrl: string; // Header Logo URL
   footerLogoUrl?: string; // Footer Logo URL
+  faviconUrl?: string; // Browser Favicon URL
   glowStyle: 'subtle' | 'medium' | 'vibrant' | 'none';
   iconVariant: 'network-orb' | 'custom-image' | 'none'; // Header icon variant
   footerIconVariant?: 'network-orb' | 'custom-image' | 'none'; // Footer icon variant
@@ -91,6 +92,7 @@ export interface SiteSeoConfig {
   robotsTxt: string;
   headerScripts: string;
   footerScripts: string;
+  allowIndexing?: boolean;
 }
 
 export interface InquiryItem {
@@ -124,16 +126,16 @@ export interface SiteConfig {
 }
 
 export const DEFAULT_PAGE_SECTIONS: PageSectionConfig[] = [
-  { id: 'sec-hero', name: 'Hero Banner', title: 'Accelerate Your Brand with Digital Growth', subtitle: 'Full-stack engineering & branding', badge: '1. Hero', visible: true, order: 1, ctaText: 'Get Started Today', ctaUrl: '#contact' },
-  { id: 'sec-services', name: 'Services Grid', title: 'High-Impact Digital Solutions', subtitle: 'Crafted for scalable business performance', badge: '2. Services', visible: true, order: 2, ctaText: 'View All Services', ctaUrl: '#services' },
-  { id: 'sec-about', name: 'About Agency', title: 'Engineering Excellence & Creative Power', subtitle: 'Your trusted partner in digital transformation', badge: '3. About Us', visible: true, order: 3 },
-  { id: 'sec-why', name: 'Why Choose Us', title: 'Why Leaders Choose Netronomic', subtitle: 'Data-driven results and bulletproof quality', badge: '4. Why Choose Us', visible: true, order: 4 },
-  { id: 'sec-process', name: 'Our Work Process', title: '4 Simple Steps to Launch', subtitle: 'From strategy to seamless deployment', badge: '5. Process', visible: true, order: 5 },
-  { id: 'sec-portfolio', name: 'Featured Portfolio', title: 'Our Latest Digital Masterpieces', subtitle: 'Case studies across web, mobile, and video', badge: '6. Portfolio', visible: true, order: 6 },
-  { id: 'sec-pricing', name: 'Transparent Pricing', title: 'Flexible Plans for Every Stage', subtitle: 'No hidden fees, standard commercial rights', badge: '7. Pricing', visible: true, order: 7 },
-  { id: 'sec-testimonials', name: 'Client Testimonials', title: 'What Our Clients Say', subtitle: 'Real reviews from growing brands', badge: '8. Reviews', visible: true, order: 8 },
-  { id: 'sec-faq', name: 'Frequently Asked Questions', title: 'Got Questions? We Have Answers', subtitle: 'Everything you need to know before getting started', badge: '9. FAQ', visible: true, order: 9 },
-  { id: 'sec-contact', name: 'Contact Us', title: "Let's Build Something Extraordinary", subtitle: 'Interactive project estimator & fast response', badge: '10. Contact', visible: true, order: 10, ctaText: 'Submit Inquiry', ctaUrl: '#contact' },
+  { id: 'sec-hero', name: 'Hero Banner', title: 'Accelerate Your Brand with Digital Growth', subtitle: 'Full-stack engineering & branding', badge: '1.', visible: true, order: 1, ctaText: 'Get Started Today', ctaUrl: '#contact' },
+  { id: 'sec-about', name: 'About Agency', title: 'Engineering Excellence & Creative Power', subtitle: 'Your trusted partner in digital transformation', badge: '2.', visible: true, order: 2 },
+  { id: 'sec-services', name: 'Services Grid', title: 'High-Impact Digital Solutions', subtitle: 'Crafted for scalable business performance', badge: '3.', visible: true, order: 3, ctaText: 'View All Services', ctaUrl: '#services' },
+  { id: 'sec-why', name: 'Why Choose Us', title: 'Why Leaders Choose Netronomic', subtitle: 'Data-driven results and bulletproof quality', badge: '4.', visible: true, order: 4 },
+  { id: 'sec-process', name: 'Our Work Process', title: '6-Step Strategic Workflow', subtitle: 'From strategy to seamless deployment', badge: '5.', visible: true, order: 5 },
+  { id: 'sec-portfolio', name: 'Featured Portfolio', title: 'Our Latest Digital Masterpieces', subtitle: 'Case studies across web, mobile, and video', badge: '6.', visible: true, order: 6 },
+  { id: 'sec-pricing', name: 'Transparent Pricing', title: 'Flexible Plans for Every Stage', subtitle: 'No hidden fees, standard commercial rights', badge: '7.', visible: true, order: 7 },
+  { id: 'sec-testimonials', name: 'Client Testimonials', title: 'What Our Clients Say', subtitle: 'Real reviews from growing brands', badge: '8.', visible: true, order: 8 },
+  { id: 'sec-faq', name: 'Frequently Asked Questions', title: 'Got Questions? We Have Answers', subtitle: 'Everything you need to know before getting started', badge: '9.', visible: true, order: 9 },
+  { id: 'sec-contact', name: 'Contact Us', title: "Let's Build Something Extraordinary", subtitle: 'Interactive project estimator & fast response', badge: '10.', visible: true, order: 10, ctaText: 'Submit Inquiry', ctaUrl: '#contact' },
 ];
 
 export const DEFAULT_SITE_PAGES: SitePageConfig[] = [
@@ -142,10 +144,12 @@ export const DEFAULT_SITE_PAGES: SitePageConfig[] = [
     title: 'Home Page',
     slug: '/',
     status: 'published',
-    metaTitle: 'Netronomic Web – Creative Digital Agency | Web Design, SEO & Digital Solutions',
-    metaDescription: 'Netronomic Web is a leading creative digital agency offering professional web design, custom website development, SEO services, branding, and digital solutions to help businesses grow online.',
-    focusKeyword: 'creative digital agency',
-    secondaryKeywords: 'Netronomic Web, web design agency, website development, SEO services, digital marketing, branding services, professional web design, web development services, digital solutions, UI/UX design',
+    metaTitle: 'Netronomic | High-Converting Web Development & SEO Agency (2026)',
+    metaDescription: 'Netronomic is a full-service digital and web development agency engineering ultra-fast websites, mobile apps, video reels, and high-impact SEO rankings.',
+    focusKeyword: 'Web Development & SEO Agency',
+    secondaryKeywords: 'Netronomic, web development agency, SEO agency, website design, mobile apps, video reels, high-converting digital solutions',
+    ogImage: '/og-image.png',
+    customSchema: '{\n  "@context": "https://schema.org",\n  "@type": "Organization",\n  "name": "Netronomic",\n  "url": "https://netronomic.com",\n  "logo": "https://netronomic.com/og-image.png",\n  "contactPoint": {\n    "@type": "ContactPoint",\n    "telephone": "+92-302-0487103",\n    "contactType": "customer service"\n  }\n}',
     noIndex: false,
     sections: DEFAULT_PAGE_SECTIONS,
   },
@@ -238,15 +242,16 @@ export const DEFAULT_INQUIRIES: InquiryItem[] = [
 export const DEFAULT_SEO_CONFIG: SiteSeoConfig = {
   canonicalUrl: 'https://netronomic.com',
   googleSiteVerification: '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM',
-  defaultOgTitle: 'Netronomic Web – Creative Digital Agency | Web Design, SEO & Digital Solutions',
-  defaultOgDescription: 'Netronomic Web is a creative digital agency offering professional web design, development, SEO, branding, and digital solutions to help businesses grow online.',
-  defaultOgImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
+  defaultOgTitle: 'Netronomic | High-Converting Web Development & SEO Agency (2026)',
+  defaultOgDescription: 'Netronomic is a full-service digital and web development agency engineering ultra-fast websites, mobile apps, video reels, and high-impact SEO rankings.',
+  defaultOgImage: '/og-image.png',
   twitterCardType: 'summary_large_image',
   globalNoIndex: false,
   globalNoFollow: false,
   robotsTxt: `User-agent: *\nAllow: /\nSitemap: https://netronomic.com/sitemap.xml`,
   headerScripts: `<!-- Google Tag Manager / Analytics -->\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-NETRONOMIC"></script>`,
   footerScripts: `<!-- Custom Chat Widget Script -->\n<!-- <script src="https://chat.netronomic.com/widget.js"></script> -->`,
+  allowIndexing: true,
 };
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
@@ -254,10 +259,11 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     brandName: 'NETRONOMIC',
     brandDotColor: '#0284c7',
     showDot: true,
-    taglineText: 'WEB AGENCY',
+    taglineText: 'DIGITAL CREATIVE & SEO AGENCY',
     showTagline: true,
     customLogoUrl: '',
     footerLogoUrl: '',
+    faviconUrl: '/favicon.ico',
     glowStyle: 'subtle',
     iconVariant: 'network-orb',
     footerIconVariant: 'network-orb',

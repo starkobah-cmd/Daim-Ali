@@ -139,6 +139,17 @@ export function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+export function sanitizeMediaTitle(rawName: string): string {
+  let name = rawName.replace(/\.[^/.]+$/, '');
+  name = name.replace(/^(chatgpt[\s_-]*image|gemini[\s_-]*generated|screenshot[\s_-]*|img[\s_-]*|dsc[\s_-]*|whatsapp[\s_-]*image[\s_-]*)/gi, '');
+  name = name.replace(/[\d]{4}[-_][\d]{2}[-_][\d]{2}/g, '');
+  name = name.replace(/[-_]+/g, ' ').trim();
+  if (!name || name.length < 2) {
+    return 'Netronomic Brand Graphic';
+  }
+  return name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
 export function processFileToMediaItem(file: File, category: MediaItem['type'] = 'image'): Promise<MediaItem> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -146,7 +157,6 @@ export function processFileToMediaItem(file: File, category: MediaItem['type'] =
       const dataUrl = e.target?.result as string;
       const img = new Image();
       img.onload = () => {
-        // Compress image to avoid QuotaExceeded
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = category === 'logo' || category === 'icon' || category === 'avatar' ? 400 : 1200;
         const MAX_HEIGHT = category === 'logo' || category === 'icon' || category === 'avatar' ? 400 : 1200;
@@ -168,32 +178,34 @@ export function processFileToMediaItem(file: File, category: MediaItem['type'] =
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
+        const cleanTitle = sanitizeMediaTitle(file.name);
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
           const compressedDataUrl = canvas.toDataURL('image/webp', 0.8);
           
           const newItem: MediaItem = {
             id: `media-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-            title: file.name.replace(/\.[^/.]+$/, ''),
+            title: cleanTitle,
             url: compressedDataUrl,
             type: category,
             sizeFormatted: formatFileSize(Math.round(compressedDataUrl.length * 0.75)),
             fileSize: Math.round(compressedDataUrl.length * 0.75),
             dimensions: `${Math.round(width)} x ${Math.round(height)} px`,
             uploadedAt: new Date().toISOString().split('T')[0],
-            altText: file.name.replace(/\.[^/.]+$/, '')
+            altText: cleanTitle
           };
           resolve(newItem);
         } else {
           resolve({
             id: `media-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-            title: file.name,
+            title: cleanTitle,
             url: dataUrl,
             type: category,
             sizeFormatted: formatFileSize(file.size),
             fileSize: file.size,
             dimensions: 'Unknown',
-            uploadedAt: new Date().toISOString().split('T')[0]
+            uploadedAt: new Date().toISOString().split('T')[0],
+            altText: cleanTitle
           });
         }
       };

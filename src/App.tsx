@@ -132,7 +132,11 @@ export default function App() {
         keywords: pageKeywords,
         ogImage: pageOgImage,
         canonicalUrl: siteConfig.seo?.canonicalUrl || 'https://netronomic.com/',
-        googleSiteVerification: siteConfig.seo?.googleSiteVerification || '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM'
+        googleSiteVerification: siteConfig.seo?.googleSiteVerification || '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM',
+        customSchema: homePage?.customSchema,
+        allowIndexing: siteConfig.seo?.allowIndexing ?? true,
+        headerScripts: siteConfig.seo?.headerScripts,
+        faviconUrl: siteConfig.logo?.faviconUrl || '/favicon.ico'
       });
     }
     const customLogo = siteConfig.logo?.customLogoUrl;

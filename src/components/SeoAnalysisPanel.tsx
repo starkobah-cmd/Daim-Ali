@@ -158,7 +158,7 @@ export const SeoAnalysisPanel: React.FC<SeoAnalysisPanelProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-sky-400">
-                  RankMath Live SEO Score
+                  NETRONOMIC SEO AUDIT
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border ${
@@ -477,7 +477,7 @@ export const SeoAnalysisPanel: React.FC<SeoAnalysisPanelProps> = ({
               <span>Real-Time On-Page SEO Checklist</span>
             </h4>
             <p className="text-xs text-slate-400 mt-0.5">
-              RankMath-calibrated rules evaluated dynamically against Title, Description, Keyword, and Body content.
+              Core Google search & semantic ranking audit rules evaluated dynamically against Title, Description, Keyword, and Body content.
             </p>
           </div>
 

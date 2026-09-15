@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { BlogEditorStudio } from './BlogEditorStudio';
 import {
   LayoutDashboard,
   FileText,
@@ -50,7 +51,15 @@ import {
   Lock,
   KeyRound,
   UserPlus,
-  LogOut
+  LogOut,
+  Facebook,
+  Instagram,
+  Twitter,
+  Linkedin,
+  Youtube,
+  Github,
+  Music2,
+  Pin
 } from 'lucide-react';
 import {
   SiteConfig,
@@ -235,9 +244,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [importJsonText, setImportJsonText] = useState('');
   const [importError, setImportError] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
+  const [resetConfirmInput, setResetConfirmInput] = useState('');
+  const [lastExportedAt, setLastExportedAt] = useState<string>(() => {
+    return localStorage.getItem('netronomic_last_exported_at') || 'Never';
+  });
+  const backupFileInputRef = useRef<HTMLInputElement>(null);
 
   // Media Library copied URL toast
   const [copiedMediaUrl, setCopiedMediaUrl] = useState('');
+  const [inquiryFilter, setInquiryFilter] = useState<'all' | 'new' | 'contacted' | 'closed'>('all');
 
   // Hero typing phrase temp input
   const [newPhraseInput, setNewPhraseInput] = useState('');
@@ -247,11 +262,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [currentSession, setCurrentSessionState] = useState<AdminSession | null>(() => getCurrentSession());
   
   // Profile & Password Update Form
-  const [profileUsername, setProfileUsername] = useState(currentSession?.username || 'admin');
-  const [profileEmail, setProfileEmail] = useState(currentSession?.email || 'admin@example.com');
+  const [profileUsername, setProfileUsername] = useState(currentSession?.username || 'netronomicweb');
+  const [profileEmail, setProfileEmail] = useState(currentSession?.email || 'starkobah@gmail.com');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [secMsg, setSecMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // New User Creation Form
@@ -316,8 +334,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       return;
     }
 
-    if (newPassword.length < 6) {
-      setSecMsg({ type: 'error', text: 'New password must be at least 6 characters long.' });
+    if (newPassword.length < 8 || !/\d/.test(newPassword)) {
+      setSecMsg({ type: 'error', text: 'Password must be at least 8 characters and contain at least one number.' });
       return;
     }
 
@@ -512,14 +530,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setEditingPortfolio({
       id: `port-${Date.now()}`,
       title: '',
-      category: 'Website Design & Development',
+      category: 'websites',
+      categoryLabel: 'Website Design & Development',
       featured: false,
       image: '',
       description: '',
-      tags: [],
+      detailedDescription: '',
+      tags: ['React', 'Tailwind'],
+      technologies: ['React', 'Vite'],
       client: '',
       stats: '',
-      link: ''
+      link: '',
+      videoUrl: '',
+      date: '2026'
     });
     setIsPortfolioModalOpen(true);
   };
@@ -713,16 +736,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     a.download = `netronomic_cms_backup_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+
+    const nowStr = new Date().toLocaleString();
+    setLastExportedAt(nowStr);
+    localStorage.setItem('netronomic_last_exported_at', nowStr);
+    triggerSaveNotification('Site backup exported successfully!');
   };
 
-  const handleImportJSON = () => {
+  const validateAndRestoreJSON = (textToRestore: string) => {
     setImportError('');
     try {
-      if (!importJsonText.trim()) {
-        setImportError('Please paste valid JSON or choose a file.');
-        return;
+      if (!textToRestore.trim()) {
+        setImportError('Please paste valid JSON or choose a backup file.');
+        return false;
       }
-      const parsed = JSON.parse(importJsonText);
+      const parsed = JSON.parse(textToRestore);
+      if (!parsed || typeof parsed !== 'object' || (!parsed.siteConfig && !parsed.posts && !parsed.agency)) {
+        setImportError('Invalid JSON backup file structure.');
+        return false;
+      }
       if (parsed.siteConfig) {
         setLocalConfig(parsed.siteConfig);
         onSaveSiteConfig(parsed.siteConfig);
@@ -731,10 +763,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         parsed.posts.forEach((p: BlogPost) => onSavePost(p));
       }
       setImportJsonText('');
-      triggerSaveNotification('Site configuration and posts imported successfully!');
+      triggerSaveNotification('Data successfully restored!');
+      return true;
     } catch (err: any) {
-      setImportError(`Failed to parse JSON: ${err.message}`);
+      setImportError('Invalid JSON backup file structure.');
+      return false;
     }
+  };
+
+  const handleRestoreFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        setImportJsonText(content);
+        const success = validateAndRestoreJSON(content);
+        if (!success) {
+          setImportError('Invalid JSON backup file structure.');
+        }
+      }
+    };
+    reader.onerror = () => {
+      setImportError('Failed to read uploaded file.');
+    };
+    reader.readAsText(file);
   };
 
   const handleInquiryStatusChange = (inquiryId: string, newStatus: 'new' | 'contacted' | 'closed') => {
@@ -744,6 +798,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }) || [];
     setLocalConfig({ ...localConfig, inquiries: updatedInquiries });
     onSaveSiteConfig({ ...localConfig, inquiries: updatedInquiries });
+  };
+
+  const handleDeleteInquiry = (inquiryId: string) => {
+    if (confirm('Are you sure you want to delete this inquiry?')) {
+      const updatedInquiries = localConfig.inquiries?.filter(i => i.id !== inquiryId) || [];
+      setLocalConfig({ ...localConfig, inquiries: updatedInquiries });
+      onSaveSiteConfig({ ...localConfig, inquiries: updatedInquiries });
+      triggerSaveNotification('Inquiry deleted successfully');
+    }
   };
 
   return (
@@ -762,7 +825,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 {localConfig.logo?.brandName || 'NETRONOMIC'} CMS
               </span>
               <span className="px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[10px] font-bold uppercase tracking-wider">
-                WordPress Suite
+                NETRONOMIC CORE
               </span>
             </div>
             <span className="text-[11px] text-slate-400 hidden sm:block">
@@ -957,7 +1020,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
                   <div className="text-3xl font-black text-emerald-400">{seoHealthScore}/100</div>
                   <p className="text-[11px] text-slate-400">
-                    Yoast / RankMath score calculated
+                    Technical SEO & Schema validation score
                   </p>
                 </div>
               </div>
@@ -980,29 +1043,36 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
 
                   <div className="space-y-3">
-                    {localConfig.inquiries?.slice(0, 3).map(inq => (
-                      <div key={inq.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-white">{inq.name}</span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                              inq.status === 'new'
-                                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                                : inq.status === 'contacted'
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                            }`}
-                          >
-                            {inq.status}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300 line-clamp-2">{inq.message}</p>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                          <span>Requested: {inq.service} ({inq.budget})</span>
-                          <span>{inq.createdAt}</span>
-                        </div>
+                    {(!localConfig.inquiries || localConfig.inquiries.length === 0) ? (
+                      <div className="p-8 text-center rounded-xl bg-slate-950 border border-slate-800/80 text-slate-500 text-xs italic space-y-1">
+                        <div>No new inquiries yet.</div>
+                        <div className="text-[10px]">Client submissions from estimators and contact forms will appear here in real-time.</div>
                       </div>
-                    ))}
+                    ) : (
+                      localConfig.inquiries?.slice(0, 3).map(inq => (
+                        <div key={inq.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-white">{inq.name}</span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                                inq.status === 'new'
+                                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                  : inq.status === 'contacted'
+                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                  : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              }`}
+                            >
+                              {inq.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300 line-clamp-2">{inq.message}</p>
+                          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                            <span>Requested: {inq.service} ({inq.budget})</span>
+                            <span>{inq.createdAt}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -1055,7 +1125,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <span>Live Site Configuration</span>
                     </div>
                     <p className="text-xs text-slate-300 leading-relaxed">
-                      All edits performed in this admin suite update local storage and the live site preview seamlessly.
+                      All edits performed in this admin suite persist securely to the active database state and exportable JSON architecture.
                     </p>
                   </div>
                 </div>
@@ -1115,7 +1185,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <Sparkles className="w-4 h-4" />
                   <span>SEO Settings & Analysis</span>
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-slate-950 text-sky-400 border border-slate-800">
-                    RankMath Live
+                    Real-Time Audit
                   </span>
                 </button>
               </div>
@@ -1627,30 +1697,51 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                             value={editingPortfolio.title || ''}
                             onChange={(e) => setEditingPortfolio({ ...editingPortfolio, title: e.target.value })}
                             className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                            placeholder="e.g. Skyline Digital Transformation"
+                            placeholder="e.g. AURA AI Automation Platform"
                           />
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
                           <div>
-                            <label className="block text-xs font-bold text-slate-300 mb-1">Category Value (internal)</label>
-                            <input
-                              type="text"
-                              value={editingPortfolio.category || ''}
-                              onChange={(e) => setEditingPortfolio({ ...editingPortfolio, category: e.target.value })}
+                            <label className="block text-xs font-bold text-slate-300 mb-1">Project Category</label>
+                            <select
+                              value={editingPortfolio.category || 'websites'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const categoryMap: Record<string, string> = {
+                                  'websites': 'Website Design & Development',
+                                  'apps': 'Mobile App Design',
+                                  'logos': 'Logo & Poster Design',
+                                  'reels': 'Short-Form Reel Editing',
+                                  'seo': 'SEO & Backlinks'
+                                };
+                                setEditingPortfolio({
+                                  ...editingPortfolio,
+                                  category: val,
+                                  categoryLabel: categoryMap[val] || 'Website Design & Development'
+                                });
+                              }}
                               className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                              placeholder="e.g. websites"
-                            />
+                            >
+                              <option value="websites">Website Design & Development</option>
+                              <option value="apps">Mobile App Design</option>
+                              <option value="logos">Logo & Poster Design</option>
+                              <option value="reels">Short-Form Reel Editing</option>
+                              <option value="seo">SEO & Backlinks</option>
+                            </select>
                           </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-300 mb-1">Category Label</label>
+
+                          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800">
                             <input
-                              type="text"
-                              value={editingPortfolio.categoryLabel || ''}
-                              onChange={(e) => setEditingPortfolio({ ...editingPortfolio, categoryLabel: e.target.value })}
-                              className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                              placeholder="e.g. Websites"
+                              type="checkbox"
+                              id="featured-toggle"
+                              checked={Boolean(editingPortfolio.featured)}
+                              onChange={(e) => setEditingPortfolio({ ...editingPortfolio, featured: e.target.checked })}
+                              className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-sky-500 cursor-pointer"
                             />
+                            <label htmlFor="featured-toggle" className="text-xs font-bold text-white cursor-pointer select-none">
+                              ⭐ Feature on Homepage (Top Showcase)
+                            </label>
                           </div>
                         </div>
 
@@ -1662,7 +1753,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                               value={editingPortfolio.client || ''}
                               onChange={(e) => setEditingPortfolio({ ...editingPortfolio, client: e.target.value })}
                               className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                              placeholder="e.g. Acme Corp"
+                              placeholder="e.g. Netronomic Labs / Tech Client"
                             />
                           </div>
                           <div>
@@ -1684,7 +1775,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                             value={editingPortfolio.link || ''}
                             onChange={(e) => setEditingPortfolio({ ...editingPortfolio, link: e.target.value })}
                             className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                            placeholder="https://..."
+                            placeholder="https://example.com"
                           />
                         </div>
 
@@ -1737,7 +1828,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                               value={editingPortfolio.date || ''}
                               onChange={(e) => setEditingPortfolio({ ...editingPortfolio, date: e.target.value })}
                               className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                              placeholder="e.g. 2024"
+                              placeholder="e.g. 2026"
                             />
                           </div>
                         </div>
@@ -1794,7 +1885,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <span>Advanced SEO Suite & On-Page Health Check</span>
                 </h1>
                 <p className="text-xs text-slate-400 mt-1">
-                  Yoast & RankMath style controls: live meta character counters, focus keyword health checklist, OpenGraph social cards, canonicals & robots.txt.
+                  Full-stack technical SEO engine: Social OpenGraph previews, crawler directives, verification tokens, and tracking injections.
                 </p>
               </div>
 
@@ -1805,19 +1896,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">Canonical URL Domain</label>
-                    <input
-                      type="text"
-                      value={localConfig.seo?.canonicalUrl || ''}
-                      onChange={(e) =>
-                        setLocalConfig({
-                          ...localConfig,
-                          seo: { ...localConfig.seo, canonicalUrl: e.target.value },
-                        })
-                      }
-                      className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                    />
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">Canonical URL Domain</label>
+                      <input
+                        type="text"
+                        value={localConfig.seo?.canonicalUrl || ''}
+                        onChange={(e) =>
+                          setLocalConfig({
+                            ...localConfig,
+                            seo: { ...localConfig.seo, canonicalUrl: e.target.value },
+                          })
+                        }
+                        className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
+                      />
+                    </div>
+                    <div className="pt-1">
+                      <label className="flex items-center gap-3 cursor-pointer select-none p-3 rounded-xl bg-slate-950 border border-slate-800">
+                        <input
+                          type="checkbox"
+                          checked={localConfig.seo?.allowIndexing !== false}
+                          onChange={(e) =>
+                            setLocalConfig({
+                              ...localConfig,
+                              seo: { ...localConfig.seo, allowIndexing: e.target.checked },
+                            })
+                          }
+                          className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-sky-500 cursor-pointer"
+                        />
+                        <div>
+                          <span className="text-xs font-bold text-white block">Search Engine Visibility (Allow Google Indexing)</span>
+                          <span className="text-[10px] text-slate-400 block">When disabled, injects &lt;meta name="robots" content="noindex, nofollow"&gt;.</span>
+                        </div>
+                      </label>
+                    </div>
                   </div>
 
                   <div>
@@ -1892,7 +2004,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
                   <div className="max-w-md rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-lg">
                     <img
-                      src={localConfig.seo?.defaultOgImage || FEATURED_IMAGE_PRESETS[0].url}
+                      src={localConfig.seo?.defaultOgImage || '/og-image.png'}
                       alt="OG Preview"
                       className="w-full h-40 object-cover bg-slate-800"
                     />
@@ -2020,6 +2132,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <option value="none">Hide Icon Entirely</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Favicon Settings */}
+              <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+                <h3 className="text-sm font-bold text-sky-400 uppercase tracking-wider">Browser Favicon Asset</h3>
+                <MediaPickerField
+                  label="Favicon Asset (32x32 / 48x48)"
+                  value={localConfig.logo?.faviconUrl || '/favicon.ico'}
+                  onChange={(url) =>
+                    setLocalConfig({
+                      ...localConfig,
+                      logo: { ...localConfig.logo, faviconUrl: url },
+                    })
+                  }
+                  category="logo"
+                  helperText="Upload favicon icon file (.ico, .png) for browser tab display."
+                />
               </div>
               {/* Logo Layout & Custom Button Options */}
               <div className="pt-6 border-t border-slate-800">
@@ -2275,9 +2404,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <p className="text-xs text-slate-400">Manage all your social media platforms here. To hide a specific platform, just clear its URL.</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-                {['facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'github', 'tiktok', 'pinterest'].map((network) => (
-                  <div key={network} className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                    <label className="block text-xs font-bold text-slate-300 mb-2 capitalize">{network} Profile URL</label>
+                {[
+                  { id: 'facebook', label: 'Facebook Profile URL', placeholder: 'https://facebook.com/yourprofile', icon: Facebook, color: 'text-blue-500 bg-blue-500/10' },
+                  { id: 'instagram', label: 'Instagram Profile URL', placeholder: 'https://instagram.com/yourprofile', icon: Instagram, color: 'text-pink-500 bg-pink-500/10' },
+                  { id: 'twitter', label: 'X (formerly Twitter) Profile URL', placeholder: 'https://x.com/yourprofile', icon: Twitter, color: 'text-sky-400 bg-sky-400/10' },
+                  { id: 'linkedin', label: 'LinkedIn Profile URL', placeholder: 'https://linkedin.com/in/yourprofile', icon: Linkedin, color: 'text-blue-400 bg-blue-400/10' },
+                  { id: 'youtube', label: 'YouTube Channel URL', placeholder: 'https://youtube.com/@yourchannel', icon: Youtube, color: 'text-rose-500 bg-rose-500/10' },
+                  { id: 'github', label: 'GitHub Profile URL', placeholder: 'https://github.com/yourprofile', icon: Github, color: 'text-purple-400 bg-purple-400/10' },
+                  { id: 'tiktok', label: 'TikTok Profile URL', placeholder: 'https://tiktok.com/@yourprofile', icon: Music2, color: 'text-teal-400 bg-teal-400/10' },
+                  { id: 'pinterest', label: 'Pinterest Profile URL', placeholder: 'https://pinterest.com/yourprofile', icon: Pin, color: 'text-red-400 bg-red-400/10' },
+                ].map(({ id: network, label, placeholder, icon: NetIcon, color }) => (
+                  <div key={network} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${color} shrink-0`}>
+                        <NetIcon className="w-3.5 h-3.5" />
+                      </div>
+                      <label className="block text-xs font-bold text-slate-300">{label}</label>
+                    </div>
                     <input
                       type="text"
                       value={(localConfig.agency?.social as any)?.[network] || ''}
@@ -2288,12 +2431,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                             ...localConfig.agency,
                             social: {
                               ...localConfig.agency?.social,
-                              [network]: e.target.value
+                              [network]: e.target.value.trim()
                             }
                           } as any
                         })
                       }
-                      placeholder={`https://${network}.com/yourprofile`}
+                      placeholder={placeholder}
                       className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-sky-500 transition-colors"
                     />
                   </div>
@@ -2303,7 +2446,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className="pt-6 border-t border-slate-800 flex justify-end">
                 <button
                   onClick={() => triggerSaveNotification('Social Media updated!')}
-                  className="px-6 py-2.5 rounded-xl bg-sky-500 text-slate-950 font-bold text-xs"
+                  className="px-6 py-2.5 rounded-xl bg-sky-500 text-slate-950 font-bold text-xs hover:bg-sky-400 transition-colors cursor-pointer"
                 >
                   Save Social Settings
                 </button>
@@ -2412,59 +2555,123 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           {/* ------------------------------------------------------------- */}
           {activeTab === 'inquiries' && (
             <div className="space-y-6 max-w-6xl mx-auto">
-              <div>
-                <h1 className="text-2xl font-extrabold text-white">Contact Inquiries & Leads</h1>
-                <p className="text-xs text-slate-400 mt-1">
-                  Manage form submissions, budget preferences, and respond directly via WhatsApp or Email.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-extrabold text-white">Contact Inquiries & Leads</h1>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Manage form submissions, budget preferences, and respond directly via WhatsApp or Email.
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Filter Bar */}
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-4 overflow-x-auto">
+                {(['all', 'new', 'contacted', 'closed'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setInquiryFilter(tab)}
+                    className={`px-4 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer whitespace-nowrap ${
+                      inquiryFilter === tab
+                        ? 'bg-sky-500 text-slate-950 shadow-md shadow-sky-500/20'
+                        : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {tab} {tab === 'all' ? `(${localConfig.inquiries?.length || 0})` : `(${localConfig.inquiries?.filter(i => i.status === tab).length || 0})`}
+                  </button>
+                ))}
               </div>
 
               <div className="space-y-4">
-                {localConfig.inquiries?.map((inq) => (
-                  <div
-                    key={inq.id}
-                    className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                      <div>
-                        <h3 className="text-base font-bold text-white">{inq.name}</h3>
-                        <p className="text-xs text-slate-400">{inq.email} • {inq.phone}</p>
+                {(() => {
+                  const filteredInquiries = (localConfig.inquiries || []).filter(inq => {
+                    if (inquiryFilter === 'all') return true;
+                    return inq.status === inquiryFilter;
+                  });
+
+                  if (filteredInquiries.length === 0) {
+                    return (
+                      <div className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 text-xs space-y-2">
+                        <MessageSquare className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                        <div className="font-bold text-slate-300">No new inquiries yet</div>
+                        <p>Submissions from the website contact form will appear here in real time.</p>
+                      </div>
+                    );
+                  }
+
+                  return filteredInquiries.map((inq) => (
+                    <div
+                      key={inq.id}
+                      className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2.5">
+                            <h3 className="text-base font-bold text-white">{inq.name}</h3>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              inq.status === 'new' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' :
+                              inq.status === 'contacted' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                              'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            }`}>
+                              {inq.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-0.5">{inq.email} • {inq.phone}</p>
+                        </div>
+
+                        <div className="flex items-center flex-wrap gap-2">
+                          <select
+                            value={inq.status}
+                            onChange={(e) =>
+                              handleInquiryStatusChange(inq.id, e.target.value as 'new' | 'contacted' | 'closed')
+                            }
+                            className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-bold text-slate-300 focus:outline-none"
+                          >
+                            <option value="new">Mark New</option>
+                            <option value="contacted">Mark Contacted</option>
+                            <option value="closed">Mark Closed</option>
+                          </select>
+
+                          <a
+                            href={`mailto:${inq.email}?subject=Regarding your inquiry at Netronomic`}
+                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-700 shadow-xs"
+                            title="Send email reply"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            Email Reply
+                          </a>
+
+                          <a
+                            href={(localConfig.agency?.whatsappNumber?.startsWith('http') ? localConfig.agency?.whatsappNumber : `https://wa.me/${localConfig.agency?.whatsappNumber || '923020487103'}`)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="whatsapp-shine-btn px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+                            title="Message via WhatsApp"
+                          >
+                            WhatsApp Reply
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteInquiry(inq.id)}
+                            className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-all cursor-pointer"
+                            title="Delete Inquiry"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={inq.status}
-                          onChange={(e) =>
-                            handleInquiryStatusChange(inq.id, e.target.value as 'new' | 'contacted' | 'closed')
-                          }
-                          className="px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs font-bold text-slate-300 focus:outline-none"
-                        >
-                          <option value="new">Mark New</option>
-                          <option value="contacted">Mark Contacted</option>
-                          <option value="closed">Mark Closed</option>
-                        </select>
+                      <p className="text-xs text-slate-300 leading-relaxed">{inq.message}</p>
 
-                        <a
-                          href={(localConfig.agency?.whatsappNumber?.startsWith('http') ? localConfig.agency?.whatsappNumber : `https://wa.me/${localConfig.agency?.whatsappNumber || '923020487103'}`)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="whatsapp-shine-btn px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-xs"
-                          title="Message Netronomic web on WhatsApp"
-                        >
-                          WhatsApp Reply
-                        </a>
+                      <div className="flex items-center justify-between text-xs text-slate-500 pt-2">
+                        <span>Service: <strong className="text-sky-400">{inq.service}</strong></span>
+                        <span>Budget: <strong className="text-emerald-400">{inq.budget}</strong></span>
+                        <span>Date: {inq.createdAt}</span>
                       </div>
                     </div>
-
-                    <p className="text-xs text-slate-300 leading-relaxed">{inq.message}</p>
-
-                    <div className="flex items-center justify-between text-xs text-slate-500 pt-2">
-                      <span>Service: <strong className="text-sky-400">{inq.service}</strong></span>
-                      <span>Budget: <strong className="text-emerald-400">{inq.budget}</strong></span>
-                      <span>Date: {inq.createdAt}</span>
-                    </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
@@ -2498,12 +2705,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <p className="text-xs text-slate-400 leading-relaxed">
                     Downloads complete JSON package containing all page structures, blog posts, SEO configurations, and agency info.
                   </p>
-                  <button
-                    onClick={handleExportJSON}
-                    className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer"
-                  >
-                    Download JSON Backup File
-                  </button>
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleExportJSON}
+                      className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer"
+                    >
+                      Download JSON Backup File
+                    </button>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                      <span className="font-bold text-slate-300">Last Backup Exported:</span>
+                      <span className="text-sky-400 font-mono">{lastExportedAt}</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Reset to Factory Defaults Card */}
@@ -2516,7 +2729,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     Reset all site data and configurations back to initial agency defaults.
                   </p>
                   <button
-                    onClick={() => setShowResetModal(true)}
+                    onClick={() => {
+                      setResetConfirmInput('');
+                      setShowResetModal(true);
+                    }}
                     className="w-full py-2.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 font-bold text-xs hover:bg-rose-500/30 transition-all cursor-pointer"
                   >
                     Reset to Factory Defaults
@@ -2526,9 +2742,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
               {/* Import JSON Box */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Upload className="w-6 h-6 text-sky-400" />
-                  <h3 className="text-base font-bold text-white">Restore / Import JSON Data</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Upload className="w-6 h-6 text-sky-400" />
+                    <h3 className="text-base font-bold text-white">Restore / Import JSON Data</h3>
+                  </div>
+                  <div>
+                    <input
+                      ref={backupFileInputRef}
+                      type="file"
+                      accept=".json,application/json"
+                      className="hidden"
+                      onChange={handleRestoreFileUpload}
+                    />
+                    <button
+                      onClick={() => backupFileInputRef.current?.click()}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      📁 Upload .json Backup File
+                    </button>
+                  </div>
                 </div>
 
                 <textarea
@@ -2544,8 +2777,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 )}
 
                 <button
-                  onClick={handleImportJSON}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs cursor-pointer shadow-md shadow-emerald-500/20"
+                  onClick={() => validateAndRestoreJSON(importJsonText)}
+                  className="px-6 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs cursor-pointer shadow-md shadow-emerald-500/20 hover:bg-emerald-400 transition-all"
                 >
                   Import Data Now
                 </button>
@@ -2658,35 +2891,66 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <form onSubmit={handleChangePasswordSubmit} className="space-y-3">
                     <div>
                       <label className="block text-xs font-bold text-slate-300 mb-1">Current Password</label>
-                      <input
-                        type="password"
-                        placeholder="••••••••••••"
-                        value={oldPassword}
-                        onChange={(e) => setOldPassword(e.target.value)}
-                        className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showOldPass ? 'text' : 'password'}
+                          placeholder="••••••••••••"
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          className="w-full px-4 py-2 pr-10 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowOldPass(!showOldPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                        >
+                          {showOldPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-slate-300 mb-1">New Password</label>
-                      <input
-                        type="password"
-                        placeholder="At least 6 characters"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showNewPass ? 'text' : 'password'}
+                          placeholder="Min 8 chars, 1 number"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-4 py-2 pr-10 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPass(!showNewPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                        >
+                          {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1">Must be at least 8 characters with 1 number.</p>
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-slate-300 mb-1">Confirm New Password</label>
-                      <input
-                        type="password"
-                        placeholder="••••••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showConfirmPass ? 'text' : 'password'}
+                          placeholder="••••••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full px-4 py-2 pr-10 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPass(!showConfirmPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                        >
+                          {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {confirmPassword && newPassword !== confirmPassword && (
+                        <p className="text-[10px] text-rose-400 mt-1 font-bold">Passwords do not match.</p>
+                      )}
                     </div>
 
                     <button
@@ -2756,14 +3020,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           </td>
                           <td className="p-3 text-slate-400 text-[11px]">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Initial'}</td>
                           <td className="p-3 text-right">
-                            <button
-                              onClick={() => handleDeleteAdminUserClick(user.id)}
-                              disabled={adminUsers.length <= 1}
-                              className="p-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 text-rose-400 transition-colors cursor-pointer disabled:opacity-30"
-                              title="Delete Admin Account"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {(() => {
+                              const isSelf = currentSession ? (user.id === currentSession.userId || user.username.toLowerCase() === currentSession.username.toLowerCase()) : false;
+                              return (
+                                <button
+                                  onClick={() => handleDeleteAdminUserClick(user.id)}
+                                  disabled={isSelf || adminUsers.length <= 1}
+                                  className={`p-1.5 rounded-lg transition-colors ${
+                                    isSelf || adminUsers.length <= 1
+                                      ? 'bg-slate-800/40 text-slate-600 cursor-not-allowed opacity-40'
+                                      : 'bg-rose-500/15 hover:bg-rose-500/30 text-rose-400 cursor-pointer'
+                                  }`}
+                                  title={isSelf ? 'Cannot delete currently logged-in account' : 'Delete Admin Account'}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              );
+                            })()}
                           </td>
                         </tr>
                       ))}
@@ -2781,592 +3054,68 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       {/* ------------------------------------------------------------- */}
       <AnimatePresence>
         {isBlogModalOpen && editingPost && (
-          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full p-6 space-y-6 max-h-[92vh] overflow-y-auto shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg font-extrabold text-white">
-                    {editingPost.id ? 'Edit Blog Article' : 'New Blog Article'}
-                  </span>
-                  <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => setBlogEditorTab('content')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        blogEditorTab === 'content' ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      Content Editor
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBlogEditorTab('seo')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        blogEditorTab === 'seo' ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>SEO Settings & Analysis</span>
-                      {(() => {
-                        const quickScore = analyzeSeo({
-                          focusKeyword: editingPost.focusKeyword || '',
-                          seoTitle: editingPost.seoTitle || editingPost.title,
-                          metaDescription: editingPost.metaDescription || editingPost.excerpt,
-                          slug: editingPost.slug,
-                          content: editingPost.content,
-                          ogImage: editingPost.ogImage || editingPost.featuredImage
-                        }).score;
-                        return (
-                          <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-extrabold ${
-                            blogEditorTab === 'seo' ? 'bg-slate-950 text-sky-400' : 'bg-slate-900 text-slate-300'
-                          }`}>
-                            {quickScore}/100
-                          </span>
-                        );
-                      })()}
-                    </button>
-                  </div>
-                </div>
+          <BlogEditorStudio
+            post={editingPost}
+            categories={BLOG_CATEGORIES}
+            onClose={() => setIsBlogModalOpen(false)}
+            onSave={(updatedPost) => {
+              if (!updatedPost.title || !updatedPost.slug) {
+                alert('Please fill in Title and Slug');
+                return;
+              }
 
-                <button
-                  onClick={() => setIsBlogModalOpen(false)}
-                  className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              const resolvedSlug = updatedPost.slug.startsWith('/') ? updatedPost.slug.slice(1) : updatedPost.slug;
+              const resolvedTitle = updatedPost.seoTitle || updatedPost.title;
+              const resolvedDesc = updatedPost.metaDescription || updatedPost.excerpt || '';
+              const resolvedOgImage = updatedPost.ogImage || updatedPost.featuredImage || FEATURED_IMAGE_PRESETS[0].url;
 
-              <form onSubmit={handleSaveArticleSubmit} className="space-y-4">
-                {blogEditorTab === 'content' ? (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1">Article Title</label>
-                        <input
-                          type="text"
-                          required
-                          value={editingPost.title || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const slugified = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-                            setEditingPost({
-                              ...editingPost,
-                              title: val,
-                              slug: editingPost.slug || slugified,
-                              seoTitle: editingPost.seoTitle || val,
-                            });
-                          }}
-                          className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                        />
-                      </div>
+              const calculatedSeo = analyzeSeo({
+                focusKeyword: updatedPost.focusKeyword || '',
+                seoTitle: resolvedTitle,
+                metaDescription: resolvedDesc,
+                slug: resolvedSlug,
+                content: updatedPost.content || '',
+                ogImage: resolvedOgImage
+              });
 
-                      <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1">URL Slug</label>
-                        <input
-                          type="text"
-                          required
-                          value={editingPost.slug || ''}
-                          onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
-                          className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                        />
-                      </div>
-                    </div>
+              const existingPost = localConfig.blogPosts.find(p => p.id === updatedPost.id);
+              const finalPost: BlogPost = {
+                id: updatedPost.id || `post-${Date.now()}`,
+                title: updatedPost.title || 'Untitled',
+                slug: resolvedSlug,
+                category: updatedPost.category || 'Web Development',
+                status: updatedPost.status || 'draft',
+                publishedAt: existingPost?.publishedAt || new Date().toISOString().split('T')[0],
+                excerpt: updatedPost.excerpt || '',
+                content: updatedPost.content || '',
+                blocks: updatedPost.blocks || [],
+                featuredImage: updatedPost.featuredImage || '',
+                author: existingPost?.author || { name: 'Netronomic Team', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250&auto=format&fit=crop', role: 'Senior SEO & Web Engineers' },
+                tags: existingPost?.tags || ['Web Development', 'SEO'],
+                readingTime: existingPost?.readingTime || '5 min read',
+                seoTitle: resolvedTitle,
+                metaDescription: resolvedDesc,
+                focusKeyword: updatedPost.focusKeyword || '',
+                secondaryKeywords: updatedPost.secondaryKeywords || '',
+                customSchema: updatedPost.customSchema || '',
+                ogImage: resolvedOgImage,
+                seoScore: calculatedSeo.score,
+                comments: existingPost?.comments || []
+              };
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1">Category</label>
-                        <select
-                          value={editingPost.category || 'Web Development'}
-                          onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
-                          className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                        >
-                          {BLOG_CATEGORIES.filter(c => c !== 'All').map(c => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                      </div>
+              const isExisting = localConfig.blogPosts.some(p => p.id === finalPost.id);
+              const updatedPosts = isExisting
+                ? localConfig.blogPosts.map(p => p.id === finalPost.id ? finalPost : p)
+                : [finalPost, ...localConfig.blogPosts];
 
-                    <div className="space-y-4">
-                      <MediaPickerField
-                        label="Featured Article Cover Image"
-                        value={editingPost.featuredImage || ''}
-                        onChange={(url) => setEditingPost({ ...editingPost, featuredImage: url })}
-                        category="blog"
-                        helperText="Select or upload a cover image for this blog post."
-                      />
-                    </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1">Article Excerpt</label>
-                      <textarea
-                        rows={2}
-                        value={editingPost.excerpt || ''}
-                        onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
-                        className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-sky-500"
-                      />
-                    </div>
-
-                    {/* Content Editor Sub-Tabs */}
-                    <div className="flex items-center gap-2 border-b border-slate-800 pb-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setBlogContentSubTab('builder')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          blogContentSubTab === 'builder' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-white bg-slate-900'
-                        }`}
-                      >
-                        Visual Block Builder
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBlogContentSubTab('markdown')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          blogContentSubTab === 'markdown' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-white bg-slate-900'
-                        }`}
-                      >
-                        Raw Markdown
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBlogContentSubTab('import')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          blogContentSubTab === 'import' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-white bg-slate-900'
-                        }`}
-                      >
-                        Import Code
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBlogContentSubTab('preview')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          blogContentSubTab === 'preview' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-white bg-slate-900'
-                        }`}
-                      >
-                        Live Preview
-                      </button>
-                    </div>
-
-                    {blogContentSubTab === 'builder' && (
-                      <div className="space-y-4">
-                        {/* Add Block Toolbar */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-900 border border-slate-800">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs font-bold text-slate-300 mr-2">Add Section:</span>
-                            <button type="button" onClick={() => handleAddBlogBlock('heading')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Heading</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('paragraph')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Paragraph</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('introduction')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Intro</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('image')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Image</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('table')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Table</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('quote')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Quote</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('bullet-list')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Bullet List</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('numbered-list')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Numbered List</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('faq')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ FAQ</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('custom-html')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ HTML</button>
-                            <button type="button" onClick={() => handleAddBlogBlock('custom-code')} className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-300 text-xs font-bold transition-colors cursor-pointer">+ Code</button>
-                          </div>
-                        </div>
-
-                        {/* Blocks List */}
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                          {(!editingPost.blocks || editingPost.blocks.length === 0) ? (
-                            <div className="text-center py-12 text-slate-500 text-xs">
-                              No blocks added yet. Click above to add article sections.
-                            </div>
-                          ) : (
-                            editingPost.blocks.map((block, idx) => (
-                              <div key={block.id} className="p-4 rounded-2xl bg-[#0B1120] border border-slate-800 space-y-3 relative group shadow-md">
-                                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                                  <span className="text-[11px] font-extrabold uppercase text-sky-400 font-mono tracking-wider">
-                                    #{idx + 1} • {block.type}
-                                  </span>
-                                  <div className="flex items-center gap-1.5">
-                                    <button type="button" onClick={() => handleMoveBlock(idx, 'up')} className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white cursor-pointer" title="Move Up"><ArrowUp className="w-3.5 h-3.5" /></button>
-                                    <button type="button" onClick={() => handleMoveBlock(idx, 'down')} className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white cursor-pointer" title="Move Down"><ArrowDown className="w-3.5 h-3.5" /></button>
-                                    <button type="button" onClick={() => handleDuplicateBlock(idx)} className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white cursor-pointer" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
-                                    <button type="button" onClick={() => handleDeleteBlock(idx)} className="p-1 rounded bg-rose-500/20 text-rose-400 hover:text-white cursor-pointer" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
-                                  </div>
-                                </div>
-
-                                {/* Block Specific Inputs */}
-                                {block.type === 'heading' && (
-                                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                                    <div>
-                                      <label className="block text-[10px] font-bold text-slate-400 mb-1">Level</label>
-                                      <select
-                                        value={block.data.level || 2}
-                                        onChange={(e) => handleUpdateBlockData(idx, 'level', parseInt(e.target.value))}
-                                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
-                                      >
-                                        <option value={1}>H1</option>
-                                        <option value={2}>H2</option>
-                                        <option value={3}>H3</option>
-                                        <option value={4}>H4</option>
-                                      </select>
-                                    </div>
-                                    <div className="sm:col-span-3">
-                                      <label className="block text-[10px] font-bold text-slate-400 mb-1">Heading Text</label>
-                                      <input
-                                        type="text"
-                                        value={block.data.text || ''}
-                                        onChange={(e) => handleUpdateBlockData(idx, 'text', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-
-                                {(block.type === 'paragraph' || block.type === 'introduction' || block.type === 'quote') && (
-                                  <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 mb-1">
-                                      {block.type === 'quote' ? 'Quote Text' : block.type === 'introduction' ? 'Lead Introduction Text' : 'Paragraph Text'}
-                                    </label>
-                                    <textarea
-                                      rows={3}
-                                      value={block.data.text || ''}
-                                      onChange={(e) => handleUpdateBlockData(idx, 'text', e.target.value)}
-                                      className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs leading-relaxed"
-                                    />
-                                  </div>
-                                )}
-
-                                {block.type === 'image' && (
-                                  <div className="space-y-3">
-                                    <MediaPickerField
-                                      label="Image Source"
-                                      value={block.data.imageUrl || ''}
-                                      onChange={(url) => handleUpdateBlockData(idx, 'imageUrl', url)}
-                                      category="blog"
-                                    />
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                      <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Alt Text</label>
-                                        <input
-                                          type="text"
-                                          value={block.data.altText || ''}
-                                          onChange={(e) => handleUpdateBlockData(idx, 'altText', e.target.value)}
-                                          className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Caption</label>
-                                        <input
-                                          type="text"
-                                          value={block.data.caption || ''}
-                                          onChange={(e) => handleUpdateBlockData(idx, 'caption', e.target.value)}
-                                          className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 mb-1">Alignment</label>
-                                        <select
-                                          value={block.data.alignment || 'center'}
-                                          onChange={(e) => handleUpdateBlockData(idx, 'alignment', e.target.value)}
-                                          className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
-                                        >
-                                          <option value="left">Left</option>
-                                          <option value="center">Center</option>
-                                          <option value="right">Right</option>
-                                        </select>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {block.type === 'table' && (
-                                  <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-bold text-slate-400 uppercase">Table Editor</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const cols = block.data.columns || [];
-                                          const rows = block.data.rows || [];
-                                          handleUpdateBlockData(idx, 'rows', [...rows, cols.map(() => 'Cell')]);
-                                        }}
-                                        className="px-2 py-1 rounded bg-slate-800 text-sky-400 text-[10px] font-bold cursor-pointer"
-                                      >
-                                        + Add Row
-                                      </button>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                      <table className="w-full text-xs">
-                                        <thead>
-                                          <tr>
-                                            {(block.data.columns || []).map((col, cIdx) => (
-                                              <th key={cIdx} className="p-1">
-                                                <input
-                                                  type="text"
-                                                  value={col}
-                                                  onChange={(e) => {
-                                                    const cols = [...(block.data.columns || [])];
-                                                    cols[cIdx] = e.target.value;
-                                                    handleUpdateBlockData(idx, 'columns', cols);
-                                                  }}
-                                                  className="w-full px-2 py-1 rounded bg-slate-950 border border-slate-800 text-sky-400 font-bold text-xs"
-                                                />
-                                              </th>
-                                            ))}
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {(block.data.rows || []).map((row, rIdx) => (
-                                            <tr key={rIdx}>
-                                              {row.map((cell, cIdx) => (
-                                                <td key={cIdx} className="p-1">
-                                                  <input
-                                                    type="text"
-                                                    value={cell}
-                                                    onChange={(e) => {
-                                                      const rows = JSON.parse(JSON.stringify(block.data.rows || []));
-                                                      rows[rIdx][cIdx] = e.target.value;
-                                                      handleUpdateBlockData(idx, 'rows', rows);
-                                                    }}
-                                                    className="w-full px-2 py-1 rounded bg-slate-950 border border-slate-800 text-slate-300 text-xs"
-                                                  />
-                                                </td>
-                                              ))}
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {(block.type === 'bullet-list' || block.type === 'numbered-list') && (
-                                  <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-bold text-slate-400 uppercase">List Items</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const items = block.data.items || [];
-                                          handleUpdateBlockData(idx, 'items', [...items, 'New list item']);
-                                        }}
-                                        className="px-2 py-1 rounded bg-slate-800 text-sky-400 text-[10px] font-bold cursor-pointer"
-                                      >
-                                        + Add Item
-                                      </button>
-                                    </div>
-                                    {(block.data.items || []).map((item, itemIdx) => (
-                                      <div key={itemIdx} className="flex items-center gap-2">
-                                        <input
-                                          type="text"
-                                          value={item}
-                                          onChange={(e) => {
-                                            const items = [...(block.data.items || [])];
-                                            items[itemIdx] = e.target.value;
-                                            handleUpdateBlockData(idx, 'items', items);
-                                          }}
-                                          className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const items = [...(block.data.items || [])];
-                                            items.splice(itemIdx, 1);
-                                            handleUpdateBlockData(idx, 'items', items);
-                                          }}
-                                          className="p-1 rounded bg-rose-500/20 text-rose-400 hover:text-white text-xs cursor-pointer"
-                                        >
-                                          <X className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {block.type === 'faq' && (
-                                  <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-bold text-slate-400 uppercase">FAQ Questions & Answers</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const qs = block.data.questions || [];
-                                          handleUpdateBlockData(idx, 'questions', [...qs, { question: 'New Question?', answer: 'Answer text.' }]);
-                                        }}
-                                        className="px-2 py-1 rounded bg-slate-800 text-sky-400 text-[10px] font-bold cursor-pointer"
-                                      >
-                                        + Add FAQ
-                                      </button>
-                                    </div>
-                                    {(block.data.questions || []).map((faq, fIdx) => (
-                                      <div key={fIdx} className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                                        <input
-                                          type="text"
-                                          placeholder="Question"
-                                          value={faq.question}
-                                          onChange={(e) => {
-                                            const qs = JSON.parse(JSON.stringify(block.data.questions || []));
-                                            qs[fIdx].question = e.target.value;
-                                            handleUpdateBlockData(idx, 'questions', qs);
-                                          }}
-                                          className="w-full px-3 py-1 rounded bg-slate-900 border border-slate-800 text-sky-300 font-bold text-xs"
-                                        />
-                                        <textarea
-                                          rows={2}
-                                          placeholder="Answer"
-                                          value={faq.answer}
-                                          onChange={(e) => {
-                                            const qs = JSON.parse(JSON.stringify(block.data.questions || []));
-                                            qs[fIdx].answer = e.target.value;
-                                            handleUpdateBlockData(idx, 'questions', qs);
-                                          }}
-                                          className="w-full px-3 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 text-xs"
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {block.type === 'custom-html' && (
-                                  <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 mb-1">Custom HTML</label>
-                                    <textarea
-                                      rows={4}
-                                      value={block.data.html || ''}
-                                      onChange={(e) => handleUpdateBlockData(idx, 'html', e.target.value)}
-                                      className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200"
-                                    />
-                                  </div>
-                                )}
-
-                                {block.type === 'custom-code' && (
-                                  <div className="space-y-2">
-                                    <div>
-                                      <label className="block text-[10px] font-bold text-slate-400 mb-1">Language</label>
-                                      <input
-                                        type="text"
-                                        value={block.data.language || 'javascript'}
-                                        onChange={(e) => handleUpdateBlockData(idx, 'language', e.target.value)}
-                                        className="w-full px-3 py-1 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs font-mono"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-[10px] font-bold text-slate-400 mb-1">Code Snippet</label>
-                                      <textarea
-                                        rows={4}
-                                        value={block.data.code || ''}
-                                        onChange={(e) => handleUpdateBlockData(idx, 'code', e.target.value)}
-                                        className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {blogContentSubTab === 'markdown' && (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1">Raw Markdown Content</label>
-                        <textarea
-                          rows={12}
-                          value={editingPost.content || ''}
-                          onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                          className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200 focus:outline-none focus:border-sky-500 leading-relaxed"
-                        />
-                      </div>
-                    )}
-
-                    {blogContentSubTab === 'import' && (
-                      <div className="space-y-4">
-                        <label className="block text-xs font-bold text-slate-300 mb-1">Import Article HTML / Markdown Code</label>
-                        <textarea
-                          rows={8}
-                          placeholder="Paste HTML or markdown code here to parse into blocks..."
-                          className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-sky-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            alert('Code imported and converted successfully into blocks!');
-                            setBlogContentSubTab('builder');
-                          }}
-                          className="px-4 py-2 rounded-xl bg-sky-500 text-slate-950 text-xs font-bold cursor-pointer"
-                        >
-                          Convert & Load into Builder
-                        </button>
-                      </div>
-                    )}
-
-                    {blogContentSubTab === 'preview' && (
-                      <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-6 max-h-[500px] overflow-y-auto">
-                        <div className="border-b border-slate-800 pb-4">
-                          <span className="text-xs font-bold text-sky-400 uppercase">{editingPost.category || 'Web Development'}</span>
-                          <h1 className="text-2xl font-black text-white mt-1">{editingPost.title || 'Untitled Article'}</h1>
-                          <p className="text-xs text-slate-400 mt-2">{editingPost.excerpt || ''}</p>
-                        </div>
-                        {editingPost.featuredImage && (
-                          <div className="aspect-video rounded-xl overflow-hidden border border-slate-800">
-                            <img src={editingPost.featuredImage} alt="Cover" className="w-full h-full object-cover" />
-                          </div>
-                        )}
-                        <article className="prose prose-invert max-w-none text-slate-300 text-sm space-y-4">
-                          {editingPost.blocks && editingPost.blocks.map((b, bIdx) => (
-                            <div key={bIdx}>
-                              {b.type === 'heading' && <h2 className="text-xl font-bold text-white">{b.data.text}</h2>}
-                              {b.type === 'paragraph' && <p>{b.data.text}</p>}
-                              {b.type === 'introduction' && <div className="p-4 bg-sky-950/40 rounded-xl text-sky-200">{b.data.text}</div>}
-                              {b.type === 'quote' && <blockquote className="border-l-4 border-sky-400 pl-4 italic">{b.data.text}</blockquote>}
-                            </div>
-                          ))}
-                        </article>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="space-y-4">
-                    <SeoAnalysisPanel
-                      focusKeyword={editingPost.focusKeyword || ''}
-                      onFocusKeywordChange={(val) => setEditingPost({ ...editingPost, focusKeyword: val })}
-                      seoTitle={editingPost.seoTitle || editingPost.title || ''}
-                      onSeoTitleChange={(val) => setEditingPost({ ...editingPost, seoTitle: val })}
-                      metaDescription={editingPost.metaDescription || editingPost.excerpt || ''}
-                      onMetaDescriptionChange={(val) => setEditingPost({ ...editingPost, metaDescription: val })}
-                      slug={editingPost.slug || ''}
-                      onSlugChange={(val) => setEditingPost({ ...editingPost, slug: val })}
-                      ogImage={editingPost.ogImage || editingPost.featuredImage || ''}
-                      onOgImageChange={(val) => setEditingPost({ ...editingPost, ogImage: val })}
-                      customSchema={editingPost.customSchema || ''}
-                      onCustomSchemaChange={(val) => setEditingPost({ ...editingPost, customSchema: val })}
-                      content={editingPost.content || ''}
-                      entityType="blog"
-                      entityName={editingPost.title || 'Untitled Post'}
-                      onScoreUpdate={(score) => setEditingPost(prev => prev ? { ...prev, seoScore: score } : null)}
-                    />
-                  </div>
-                )}
-
-                <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsBlogModalOpen(false)}
-                    className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="px-6 py-2 rounded-xl bg-sky-500 text-slate-950 text-xs font-extrabold shadow-md shadow-sky-500/20"
-                  >
-                    Save Article
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
+              const updatedConfig = { ...localConfig, blogPosts: updatedPosts };
+              setLocalConfig(updatedConfig);
+              onSaveSiteConfig(updatedConfig);
+              setIsBlogModalOpen(false);
+              setSavedSuccessMsg('Blog article saved successfully in Gutenberg Studio!');
+              setTimeout(() => setSavedSuccessMsg(null), 3000);
+            }}
+          />
         )}
       </AnimatePresence>
 
@@ -3387,23 +3136,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <span>Confirm Factory Reset</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                This action will restore all site pages, agency details, logo settings, and SEO configurations to the original defaults. Are you sure?
+                This action will restore all site pages, agency details, logo settings, and SEO configurations to original defaults. To confirm, please type <strong className="text-rose-400 font-mono">CONFIRM RESET</strong> below:
               </p>
+              <input
+                type="text"
+                value={resetConfirmInput}
+                onChange={(e) => setResetConfirmInput(e.target.value)}
+                placeholder="Type CONFIRM RESET..."
+                className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-rose-500"
+              />
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
-                  onClick={() => setShowResetModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold"
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetConfirmInput('');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
+                  disabled={resetConfirmInput !== 'CONFIRM RESET'}
                   onClick={() => {
-                    onResetSiteConfig();
-                    setShowResetModal(false);
-                    setLocalConfig(DEFAULT_SITE_CONFIG);
-                    triggerSaveNotification('Site reset to factory defaults!');
+                    if (resetConfirmInput === 'CONFIRM RESET') {
+                      onResetSiteConfig();
+                      setShowResetModal(false);
+                      setResetConfirmInput('');
+                      setLocalConfig(DEFAULT_SITE_CONFIG);
+                      triggerSaveNotification('Data successfully restored to factory defaults!');
+                    }
                   }}
-                  className="px-5 py-2 rounded-xl bg-rose-500 text-white font-extrabold text-xs shadow-md shadow-rose-500/30"
+                  className={`px-5 py-2 rounded-xl font-extrabold text-xs transition-all ${
+                    resetConfirmInput === 'CONFIRM RESET'
+                      ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 cursor-pointer hover:bg-rose-600'
+                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  }`}
                 >
                   Reset Everything
                 </button>

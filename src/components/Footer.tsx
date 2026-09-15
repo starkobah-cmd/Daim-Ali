@@ -33,7 +33,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenQuote, onNavigate, siteCon
         key={network}
         href={url}
         target="_blank"
-        rel="noopener noreferrer"
+        rel="noopener noreferrer nofollow"
         className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-sky-500 hover:text-white transition-colors"
         title={network}
       >

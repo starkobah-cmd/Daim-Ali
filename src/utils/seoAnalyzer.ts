@@ -150,6 +150,17 @@ export function analyzeSeo({
   const isContentLengthOk = totalWords >= 600;
   const isDensityOptimal = keywordDensity >= 1.0 && keywordDensity <= 2.5;
 
+  // Subheading keyword check
+  let keywordInSubheading = false;
+  if (rawKeyword) {
+    const subheadings = rawContent.match(/(?:#{2,6}\s+.*|<h[2-6][^>]*>.*?<\/h[2-6]>)/gi) || [];
+    const keywordRegex = new RegExp(`\\b${rawKeyword.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+    keywordInSubheading = subheadings.some(sh => keywordRegex.test(sh));
+  }
+
+  // TOC check
+  const hasToc = /(table of contents|\[toc\]|<nav[^>]*toc|<ul[^>]*>(\s*<li><a href="#[^"]+">.*?<\/a><\/li>){2,})/i.test(rawContent);
+
   // Links detection: markdown [text](url), HTML <a href=...>, or raw URLs
   const hasLinks = /(?:\[.*?\]\(https?:\/\/|\/|#[^)]+\)|<a\s+[^>]*href=["'](?:https?:\/\/|\/|#)|https?:\/\/[^\s]+)/i.test(rawContent);
 
@@ -333,12 +344,36 @@ export function analyzeSeo({
       label: 'Short, readable paragraphs (<= 120 words each)',
       category: 'content',
       passed: areParagraphsShort,
-      points: 5,
-      earned: areParagraphsShort ? 5 : 0,
+      points: 4,
+      earned: areParagraphsShort ? 4 : 0,
       message: areParagraphsShort
         ? `Paragraphs are bite-sized (max ${maxParagraphWords} words). Easy on mobile eyes!`
         : `One or more paragraphs exceed 120 words (longest has ${maxParagraphWords} words). Break into shorter blocks.`,
       tip: 'Keep paragraphs under 120 words to improve mobile readability and dwell time.'
+    },
+    {
+      id: 'keyword-in-subheading',
+      label: 'Focus Keyword appears in a Subheading (H2/H3)',
+      category: 'content',
+      passed: keywordInSubheading,
+      points: 4,
+      earned: keywordInSubheading ? 4 : 0,
+      message: keywordInSubheading
+        ? 'Focus keyword is present in at least one subheading.'
+        : 'Focus keyword is missing from all H2/H3 subheadings.',
+      tip: 'Include your focus keyword in subheadings to signal clear topical hierarchy to search engines.'
+    },
+    {
+      id: 'has-table-of-contents',
+      label: 'Table of Contents detected in content',
+      category: 'content',
+      passed: hasToc,
+      points: 4,
+      earned: hasToc ? 4 : 0,
+      message: hasToc
+        ? 'Table of Contents detected for better UX and jump links.'
+        : 'No Table of Contents detected. Adding a TOC improves user experience and SERP sitelinks.',
+      tip: 'Include a Table of Contents list with anchor links for long-form articles.'
     }
   ];
 

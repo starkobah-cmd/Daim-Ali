@@ -231,7 +231,7 @@ export const ContactUs: React.FC<ContactUsProps> = ({ preselectedService, siteCo
                       key={soc.network}
                       href={soc.href}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel="noopener noreferrer nofollow"
                       className="px-3 py-1.5 rounded-lg bg-white border border-sky-200 text-xs font-bold text-slate-600 hover:text-sky-600 hover:border-sky-400 hover:bg-sky-50 flex items-center gap-1.5 transition-all shadow-sm"
                     >
                       <soc.Icon className="w-3.5 h-3.5" />
