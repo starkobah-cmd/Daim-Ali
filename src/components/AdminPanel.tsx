@@ -70,7 +70,8 @@ import {
   PageSectionConfig,
   SiteSeoConfig,
   InquiryItem,
-  DEFAULT_SITE_CONFIG
+  DEFAULT_SITE_CONFIG,
+  DEFAULT_SITEMAP_XML
 } from '../data/siteConfig';
 import { BlogPost, PostStatus, PortfolioItem, BlogBlock, BlogBlockType } from '../types';
 import { BLOG_CATEGORIES } from '../data/blogData';
@@ -2018,6 +2019,73 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <div className="text-xs text-slate-400 line-clamp-2">
                         {localConfig.seo?.defaultOgDescription || localConfig.hero?.subtitle}
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* XML SITEMAP CONFIGURATION CARD */}
+                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-white">XML Sitemap Configuration (sitemap.xml)</h3>
+                        <span className="px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 text-[10px] font-black uppercase">
+                          Search Console Live Sync
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Directly edit your production sitemap.xml. Ensure no anchor (#) fragments are included.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const content = localConfig.seo?.sitemapXml || DEFAULT_SITEMAP_XML;
+                          if (content.includes('#')) {
+                            alert('Validation Warning: Sitemap contains hash (#) fragments which are rejected by Google Search Console.');
+                          } else if (!content.includes('<?xml') || !content.includes('<urlset')) {
+                            alert('Validation Error: Invalid XML sitemap structure. Missing <?xml or <urlset root.');
+                          } else {
+                            alert('XML Sitemap is valid! No hash fragments detected.');
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        Validate XML
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLocalConfig({
+                            ...localConfig,
+                            seo: { ...localConfig.seo, sitemapXml: DEFAULT_SITEMAP_XML },
+                          });
+                          triggerSaveNotification('Sitemap reset to safe default!');
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Reset Default</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <textarea
+                      rows={12}
+                      value={localConfig.seo?.sitemapXml || DEFAULT_SITEMAP_XML}
+                      onChange={(e) =>
+                        setLocalConfig({
+                          ...localConfig,
+                          seo: { ...localConfig.seo, sitemapXml: e.target.value },
+                        })
+                      }
+                      className="w-full p-4 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs text-emerald-300 focus:outline-none focus:border-sky-500 leading-relaxed"
+                    />
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
+                      <span>Total URLs / Entries: {(localConfig.seo?.sitemapXml || DEFAULT_SITEMAP_XML).match(/<loc>/g)?.length || 0} indexed endpoints</span>
+                      <span>Characters: {(localConfig.seo?.sitemapXml || DEFAULT_SITEMAP_XML).length}</span>
                     </div>
                   </div>
                 </div>

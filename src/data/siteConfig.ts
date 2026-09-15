@@ -93,6 +93,7 @@ export interface SiteSeoConfig {
   headerScripts: string;
   footerScripts: string;
   allowIndexing?: boolean;
+  sitemapXml?: string;
 }
 
 export interface InquiryItem {
@@ -239,6 +240,46 @@ export const DEFAULT_INQUIRIES: InquiryItem[] = [
   }
 ];
 
+export const DEFAULT_SITEMAP_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://netronomicweb.com/</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://netronomicweb.com/blog</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://netronomicweb.com/blog/10-key-strategies-high-converting-websites-2026</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://netronomicweb.com/blog/ultimate-guide-profile-social-backlinks-seo-dominance</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://netronomicweb.com/blog/designing-viral-reels-video-editing-hacks-brands</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://netronomicweb.com/blog/modern-brand-identity-custom-logos-vs-templates</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>`;
+
 export const DEFAULT_SEO_CONFIG: SiteSeoConfig = {
   canonicalUrl: 'https://netronomic.com',
   googleSiteVerification: '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM',
@@ -252,6 +293,7 @@ export const DEFAULT_SEO_CONFIG: SiteSeoConfig = {
   headerScripts: `<!-- Google Tag Manager / Analytics -->\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-NETRONOMIC"></script>`,
   footerScripts: `<!-- Custom Chat Widget Script -->\n<!-- <script src="https://chat.netronomic.com/widget.js"></script> -->`,
   allowIndexing: true,
+  sitemapXml: DEFAULT_SITEMAP_XML,
 };
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
