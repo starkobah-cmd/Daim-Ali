@@ -49,9 +49,7 @@ export function handleAdminLogin(body: any) {
   // Securely verify password against server-only credential
   const isPasswordMatch = 
     cleanPass === currentAdminConfig.password || 
-    cleanPass === 'sirdaimali.netronomicweb' || 
-    cleanPass === 'Admin@786' || 
-    cleanPass === 'Admin@123';
+    cleanPass === 'sirdaimali.netronomicweb';
 
   if (!isPasswordMatch) {
     return { 
@@ -143,7 +141,7 @@ export function handleAdminChangePassword(body: any, authHeader?: string) {
     return { status: 400, data: { success: false, error: 'New password must be at least 6 characters long.' } };
   }
 
-  if (oldPassword !== currentAdminConfig.password && oldPassword !== 'Admin@123') {
+  if (oldPassword !== currentAdminConfig.password) {
     return { status: 400, data: { success: false, error: 'Current password is incorrect.' } };
   }
 
