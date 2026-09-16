@@ -132,7 +132,7 @@ export default function App() {
         keywords: pageKeywords,
         ogImage: pageOgImage,
         canonicalUrl: siteConfig.seo?.canonicalUrl || 'https://netronomic.com/',
-        googleSiteVerification: siteConfig.seo?.googleSiteVerification || '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM',
+        googleSiteVerification: siteConfig.seo?.googleSiteVerification || '1O58y68drsW0R2i79KCJdV_4JNK1IdlMxWOe80dxsq4',
         customSchema: homePage?.customSchema,
         allowIndexing: siteConfig.seo?.allowIndexing ?? true,
         headerScripts: siteConfig.seo?.headerScripts,

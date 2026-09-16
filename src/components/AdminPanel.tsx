@@ -1952,7 +1952,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           seo: { ...localConfig.seo, googleSiteVerification: e.target.value },
                         })
                       }
-                      placeholder="e.g. _bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM"
+                      placeholder="e.g. 1O58y68drsW0R2i79KCJdV_4JNK1IdlMxWOe80dxsq4"
                       className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:border-sky-500"
                     />
                     <p className="text-[10px] text-slate-400 mt-1">

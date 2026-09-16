@@ -58,7 +58,7 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
       description: resolvedDesc,
       ogImage: resolvedImage,
       canonicalUrl: canonical,
-      googleSiteVerification: '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM'
+      googleSiteVerification: '1O58y68drsW0R2i79KCJdV_4JNK1IdlMxWOe80dxsq4'
     });
 
     // Inject Schema.org Article JSON-LD
