@@ -282,7 +282,7 @@ export const DEFAULT_SITEMAP_XML = `<?xml version="1.0" encoding="UTF-8"?>
 
 export const DEFAULT_SEO_CONFIG: SiteSeoConfig = {
   canonicalUrl: 'https://netronomic.com',
-  googleSiteVerification: '_bSz_UNGInG_iuZe3dvqdcm_F-AEnkLctkQLhzP_dXM',
+  googleSiteVerification: '1O58y68drsW0R2i79KCJdV_4JNK1IdlMxWOe80dxsq4',
   defaultOgTitle: 'Netronomic | High-Converting Web Development & SEO Agency (2026)',
   defaultOgDescription: 'Netronomic is a full-service digital and web development agency engineering ultra-fast websites, mobile apps, video reels, and high-impact SEO rankings.',
   defaultOgImage: '/og-image.png',
