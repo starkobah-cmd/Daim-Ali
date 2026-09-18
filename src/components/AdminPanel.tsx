@@ -140,8 +140,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onOpenSitemap,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [localConfig, setLocalConfig] = useState<SiteConfig>({ ...siteConfig });
+  const [localConfig, setLocalConfig] = useState<SiteConfig>({ ...siteConfig, blogPosts: posts || siteConfig.blogPosts });
   const [savedSuccessMsg, setSavedSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (posts) {
+      setLocalConfig(prev => ({ ...prev, blogPosts: posts }));
+    }
+  }, [posts]);
 
     // Portfolio Management State
   const [editingPortfolio, setEditingPortfolio] = useState<Partial<PortfolioItem> | null>(null);
@@ -3335,6 +3341,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               const updatedConfig = { ...localConfig, blogPosts: updatedPosts };
               setLocalConfig(updatedConfig);
               onSaveSiteConfig(updatedConfig);
+              onSavePost(finalPost);
               setIsBlogModalOpen(false);
               setSavedSuccessMsg('Blog article saved successfully in Gutenberg Studio!');
               setTimeout(() => setSavedSuccessMsg(null), 3000);
