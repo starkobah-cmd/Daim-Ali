@@ -163,6 +163,17 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
     }
   };
 
+  // Helper to format inline markdown like **bold**
+  const renderFormattedText = (text: string) => {
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-extrabold text-white">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
   // Helper to render content blocks or markdown cleanly
   const renderContentBlocks = (post: BlogPost) => {
     if (post.blocks && post.blocks.length > 0) {
@@ -174,24 +185,24 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
             const id = text.toLowerCase().replace(/[^\w]+/g, '-');
             const level = data.level || 2;
             if (level === 1) {
-              return <h1 key={block.id || i} id={id} className="text-3xl sm:text-4xl font-black text-white mt-8 mb-4 tracking-tight scroll-mt-28">{text}</h1>;
+              return <h1 key={block.id || i} id={id} className="text-3xl sm:text-4xl font-black text-white mt-8 mb-4 tracking-tight scroll-mt-28">{renderFormattedText(text)}</h1>;
             } else if (level === 3) {
-              return <h3 key={block.id || i} id={id} className="text-xl font-bold text-sky-300 mt-6 mb-3 scroll-mt-28">{text}</h3>;
+              return <h3 key={block.id || i} id={id} className="text-xl font-bold text-sky-300 mt-6 mb-3 scroll-mt-28">{renderFormattedText(text)}</h3>;
             } else if (level === 4) {
-              return <h4 key={block.id || i} id={id} className="text-lg font-bold text-white mt-6 mb-2 scroll-mt-28">{text}</h4>;
+              return <h4 key={block.id || i} id={id} className="text-lg font-bold text-white mt-6 mb-2 scroll-mt-28">{renderFormattedText(text)}</h4>;
             }
-            return <h2 key={block.id || i} id={id} className="text-2xl sm:text-3xl font-extrabold text-white mt-8 mb-4 tracking-tight border-b border-slate-800 pb-2 scroll-mt-28">{text}</h2>;
+            return <h2 key={block.id || i} id={id} className="text-2xl sm:text-3xl font-extrabold text-white mt-8 mb-4 tracking-tight border-b border-slate-800 pb-2 scroll-mt-28">{renderFormattedText(text)}</h2>;
           }
           case 'introduction':
             return (
               <div key={block.id || i} className="my-6 p-6 rounded-2xl bg-sky-950/40 border border-sky-500/30 text-sky-100 text-lg sm:text-xl font-medium leading-relaxed shadow-lg">
-                {data.text}
+                {renderFormattedText(data.text || '')}
               </div>
             );
           case 'paragraph':
             return (
               <p key={block.id || i} className="text-slate-300 text-base sm:text-lg leading-relaxed my-4 font-normal">
-                {data.text}
+                {renderFormattedText(data.text || '')}
               </p>
             );
           case 'image': {
@@ -244,7 +255,7 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
           case 'quote':
             return (
               <blockquote key={block.id || i} className="my-6 p-6 rounded-2xl bg-gradient-to-r from-sky-950/80 to-slate-900 border-l-4 border-sky-400 text-sky-100 italic font-medium shadow-md">
-                "{data.text}"
+                "{renderFormattedText(data.text || '')}"
               </blockquote>
             );
           case 'bullet-list':
@@ -253,7 +264,7 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
                 {(data.items || []).map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2.5 text-slate-300 text-sm sm:text-base">
                     <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-2 shrink-0" />
-                    <span>{item}</span>
+                    <span>{renderFormattedText(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -264,7 +275,7 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
                 {(data.items || []).map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-slate-300 text-sm sm:text-base">
                     <span className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center font-mono text-xs font-bold mt-0.5 shrink-0">{idx + 1}</span>
-                    <span>{item}</span>
+                    <span>{renderFormattedText(item)}</span>
                   </li>
                 ))}
               </ol>
@@ -309,19 +320,20 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
     }
 
     const content = post.content || '';
-    const blocks = content.split('\n\n');
+    const rawBlocks = content.split(/\n\n+/);
     let codeBlockCount = 0;
 
-    return blocks.map((block, i) => {
+    return rawBlocks.map((block, i) => {
       const trimmed = block.trim();
+      if (!trimmed) return null;
 
       // Heading 1
       if (trimmed.startsWith('# ')) {
         const text = trimmed.replace('# ', '');
         const id = text.toLowerCase().replace(/[^\w]+/g, '-');
         return (
-          <h1 key={i} id={id} className="text-3xl sm:text-4xl font-black text-white mt-8 mb-4 tracking-tight scroll-mt-28">
-            {text}
+          <h1 key={i} id={id} className="text-3xl sm:text-4xl font-black text-white mt-10 mb-4 tracking-tight scroll-mt-28">
+            {renderFormattedText(text)}
           </h1>
         );
       }
@@ -331,8 +343,8 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
         const text = trimmed.replace('## ', '');
         const id = text.toLowerCase().replace(/[^\w]+/g, '-');
         return (
-          <h2 key={i} id={id} className="text-2xl sm:text-3xl font-extrabold text-white mt-8 mb-4 tracking-tight border-b border-slate-800 pb-2 scroll-mt-28">
-            {text}
+          <h2 key={i} id={id} className="text-2xl sm:text-3xl font-extrabold text-white mt-10 mb-4 tracking-tight border-b border-slate-800 pb-2 scroll-mt-28">
+            {renderFormattedText(text)}
           </h2>
         );
       }
@@ -342,18 +354,18 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
         const text = trimmed.replace('### ', '');
         const id = text.toLowerCase().replace(/[^\w]+/g, '-');
         return (
-          <h3 key={i} id={id} className="text-xl font-bold text-sky-300 mt-6 mb-3 scroll-mt-28">
-            {text}
+          <h3 key={i} id={id} className="text-xl font-bold text-sky-300 mt-8 mb-3 scroll-mt-28">
+            {renderFormattedText(text)}
           </h3>
         );
       }
 
       // Blockquote
       if (trimmed.startsWith('> ')) {
-        const quoteText = trimmed.replace('> ', '').replace(/"/g, '');
+        const quoteText = trimmed.replace(/^>\s*/gm, '').replace(/"/g, '');
         return (
           <blockquote key={i} className="my-6 p-6 rounded-2xl bg-gradient-to-r from-sky-950/80 to-slate-900 border-l-4 border-sky-400 text-sky-100 italic font-medium shadow-md">
-            "{quoteText}"
+            "{renderFormattedText(quoteText)}"
           </blockquote>
         );
       }
@@ -362,8 +374,8 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
       if (trimmed.startsWith('```')) {
         const currentCodeIdx = codeBlockCount++;
         const lines = trimmed.split('\n');
-        const lang = lines[0].replace('```', '') || 'code';
-        const codeCode = lines.slice(1, lines.length - 1).join('\n');
+        const lang = lines[0].replace('```', '').trim() || 'code';
+        const codeCode = lines.slice(1, lines[lines.length - 1].trim() === '```' ? -1 : lines.length).join('\n');
 
         return (
           <div key={i} className="my-6 rounded-2xl bg-[#050816] border border-slate-800 overflow-hidden shadow-xl">
@@ -406,24 +418,39 @@ export const SingleBlog: React.FC<SingleBlogProps> = ({
       }
 
       // Unordered list
-      if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
-        const items = trimmed.split('\n').map(item => item.replace(/^[*|-]\s+/, ''));
+      if (trimmed.match(/^(\*|-)\s+/m)) {
+        const items = trimmed.split('\n').map(item => item.replace(/^(\*|-)\s+/, ''));
         return (
-          <ul key={i} className="my-4 space-y-2 list-none">
+          <ul key={i} className="my-4 space-y-2.5 list-none">
             {items.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-slate-300 text-sm sm:text-base">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-2 shrink-0" />
-                <span>{item}</span>
+              <li key={idx} className="flex items-start gap-2.5 text-slate-300 text-sm sm:text-base leading-relaxed">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-2.5 shrink-0" />
+                <span>{renderFormattedText(item)}</span>
               </li>
             ))}
           </ul>
         );
       }
 
+      // Numbered list
+      if (trimmed.match(/^\d+\.\s+/m)) {
+        const items = trimmed.split('\n').map(item => item.replace(/^\d+\.\s+/, ''));
+        return (
+          <ol key={i} className="my-4 space-y-2.5 list-none">
+            {items.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-3 text-slate-300 text-sm sm:text-base leading-relaxed">
+                <span className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center font-mono text-xs font-bold mt-0.5 shrink-0">{idx + 1}</span>
+                <span>{renderFormattedText(item)}</span>
+              </li>
+            ))}
+          </ol>
+        );
+      }
+
       // Standard paragraph
       return (
         <p key={i} className="text-slate-300 text-base sm:text-lg leading-relaxed my-4 font-normal">
-          {trimmed}
+          {renderFormattedText(trimmed)}
         </p>
       );
     });

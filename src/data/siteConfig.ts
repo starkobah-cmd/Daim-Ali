@@ -94,6 +94,7 @@ export interface SiteSeoConfig {
   footerScripts: string;
   allowIndexing?: boolean;
   sitemapXml?: string;
+  wordpressUrl?: string;
 }
 
 export interface InquiryItem {

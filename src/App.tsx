@@ -115,6 +115,64 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => isAuthenticatedAdmin());
   const [showInitialLoader, setShowInitialLoader] = useState<boolean>(() => !sessionStorage.getItem('netronomic_loaded_once'));
 
+  // Automatically fetch latest posts from WordPress REST API without manual admin sync
+  useEffect(() => {
+    async function fetchWpPosts() {
+      try {
+        const res = await fetch('https://cms.netronomic.com/wp-json/wp/v2/posts?_embed&per_page=20');
+        if (!res.ok) return;
+        const wpPosts = await res.json();
+        if (!Array.isArray(wpPosts)) return;
+
+        const mappedPosts: BlogPost[] = wpPosts.map((p: any) => {
+          const title = p.title?.rendered ? p.title.rendered.replace(/<[^>]*>?/gm, '') : 'Untitled WordPress Post';
+          const excerpt = p.excerpt?.rendered ? p.excerpt.rendered.replace(/<[^>]*>?/gm, '') : '';
+          const content = p.content?.rendered ? p.content.rendered : '';
+          const slug = p.slug || `wp-post-${p.id}`;
+          const date = p.date ? p.date.split('T')[0] : new Date().toISOString().split('T')[0];
+          
+          let featuredImage = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1200';
+          if (p._embedded && p._embedded['wp:featuredmedia'] && p._embedded['wp:featuredmedia'][0]?.source_url) {
+            featuredImage = p._embedded['wp:featuredmedia'][0].source_url;
+          }
+
+          const authorName = p._embedded?.author?.[0]?.name || 'Netronomic Editor';
+
+          return {
+            id: `wp-${p.id}`,
+            title,
+            slug,
+            excerpt,
+            content,
+            featuredImage,
+            author: {
+              name: authorName,
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+              role: 'Editorial Team'
+            },
+            category: 'WordPress CMS',
+            tags: ['WordPress', 'Tech'],
+            publishedAt: date,
+            readingTime: '5 min read',
+            status: 'published',
+            comments: []
+          };
+        });
+
+        if (mappedPosts.length > 0) {
+          setPosts(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const newOnes = mappedPosts.filter(mp => !existingIds.has(mp.id));
+            return [...newOnes, ...prev];
+          });
+        }
+      } catch (err) {
+        console.warn('Auto WP fetch error:', err);
+      }
+    }
+    fetchWpPosts();
+  }, []);
+
   // Handle URL hash / path routes (e.g. /admin, /dashboard, /cms, #admin)
   useEffect(() => {
     if (blogView !== 'single-blog') {

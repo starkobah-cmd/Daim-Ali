@@ -25,6 +25,8 @@ import {
   Download,
   Upload,
   RotateCcw,
+  RefreshCw,
+  Zap,
   ExternalLink,
   Save,
   Globe,
@@ -162,6 +164,82 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [blogEditorTab, setBlogEditorTab] = useState<'content' | 'seo'>('content');
   const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
   const [blogContentSubTab, setBlogContentSubTab] = useState<'builder' | 'markdown' | 'import' | 'preview'>('builder');
+
+  const [isSyncingWp, setIsSyncingWp] = useState(false);
+  const [wpSyncStatus, setWpSyncStatus] = useState<string | null>(null);
+
+  const handleSyncWordPress = async () => {
+    const wpUrl = localConfig.seo?.wordpressUrl?.trim();
+    if (!wpUrl) {
+      alert('Please enter your WordPress site URL first (e.g. https://mywordpresssite.com)');
+      return;
+    }
+    setIsSyncingWp(true);
+    setWpSyncStatus('Connecting to WordPress REST API...');
+    try {
+      const cleanUrl = wpUrl.replace(/\/+$/, '');
+      const res = await fetch(`${cleanUrl}/wp-json/wp/v2/posts?_embed&per_page=15`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) {
+        throw new Error(`WordPress returned status ${res.status}. Make sure REST API is enabled on your WP site.`);
+      }
+      const wpPosts = await res.json();
+      if (!Array.isArray(wpPosts)) {
+        throw new Error('Invalid response format from WordPress REST API.');
+      }
+
+      const mappedPosts: BlogPost[] = wpPosts.map((p: any) => {
+        const title = p.title?.rendered ? p.title.rendered.replace(/<[^>]*>?/gm, '') : 'Untitled WordPress Post';
+        const excerpt = p.excerpt?.rendered ? p.excerpt.rendered.replace(/<[^>]*>?/gm, '') : '';
+        const content = p.content?.rendered ? p.content.rendered : '';
+        const slug = p.slug || `wp-post-${p.id}`;
+        const date = p.date ? p.date.split('T')[0] : new Date().toISOString().split('T')[0];
+        
+        let featuredImage = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1200';
+        if (p._embedded && p._embedded['wp:featuredmedia'] && p._embedded['wp:featuredmedia'][0]?.source_url) {
+          featuredImage = p._embedded['wp:featuredmedia'][0].source_url;
+        }
+
+        const authorName = p._embedded?.author?.[0]?.name || 'WordPress Author';
+
+        return {
+          id: `wp-${p.id}`,
+          title,
+          slug,
+          excerpt,
+          content,
+          featuredImage,
+          author: {
+            name: authorName,
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+            role: 'WordPress Editor'
+          },
+          category: 'WordPress Import',
+          tags: ['WordPress', 'Synced'],
+          publishedAt: date,
+          readingTime: '5 min read',
+          status: 'published',
+          comments: []
+        };
+      });
+
+      const existingIds = new Set(localConfig.blogPosts.map(bp => bp.id));
+      const newPostsToAdd = mappedPosts.filter(mp => !existingIds.has(mp.id));
+      const mergedPosts = [...newPostsToAdd, ...localConfig.blogPosts];
+
+      const updatedConfig = { ...localConfig, blogPosts: mergedPosts };
+      setLocalConfig(updatedConfig);
+      onSaveSiteConfig(updatedConfig);
+      setWpSyncStatus(`Successfully synced ${mappedPosts.length} posts from WordPress!`);
+      triggerSaveNotification(`Synced ${mappedPosts.length} posts from WordPress!`);
+    } catch (err: any) {
+      console.error('WP Sync error:', err);
+      setWpSyncStatus(`Sync error: ${err.message || 'CORS or Network error. Check URL.'}`);
+    } finally {
+      setIsSyncingWp(false);
+    }
+  };
 
   const getDefaultBlockData = (type: BlogBlockType): BlogBlock['data'] => {
     switch (type) {
@@ -2035,6 +2113,66 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* WORDPRESS CMS INTEGRATION & SYNC */}
+                <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                  <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+                    <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                      <Globe className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">WordPress Website & CMS Integration</h3>
+                      <p className="text-xs text-slate-400">Connect your WordPress site via REST API to automatically sync posts and articles.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-300 mb-1">WordPress Site URL</label>
+                      <input
+                        type="text"
+                        value={localConfig.seo?.wordpressUrl || ''}
+                        onChange={(e) =>
+                          setLocalConfig({
+                            ...localConfig,
+                            seo: { ...localConfig.seo, wordpressUrl: e.target.value },
+                          })
+                        }
+                        placeholder="e.g. https://mywordpresssite.com"
+                        className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <button
+                        onClick={handleSyncWordPress}
+                        disabled={isSyncingWp}
+                        className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isSyncingWp ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span>Syncing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-4 h-4" />
+                            <span>Sync WordPress Posts</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {wpSyncStatus && (
+                    <div className={`p-3 rounded-xl text-xs font-mono border ${
+                      wpSyncStatus.includes('Successfully') || wpSyncStatus.includes('Synced')
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                        : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                    }`}>
+                      {wpSyncStatus}
+                    </div>
+                  )}
                 </div>
 
                 {/* COMPREHENSIVE SITEMAP XML MANAGEMENT SUITE */}
