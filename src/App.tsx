@@ -173,6 +173,46 @@ export default function App() {
     fetchWpPosts();
   }, []);
 
+  // Automatically fetch homepage and sections content from WordPress Pages REST API with fallback
+  useEffect(() => {
+    async function fetchWpPages() {
+      try {
+        const res = await fetch('https://cms.netronomic.com/wp-json/wp/v2/pages?_embed');
+        if (!res.ok) return;
+        const wpPages = await res.json();
+        if (!Array.isArray(wpPages) || wpPages.length === 0) return;
+
+        const homeWpPage = wpPages.find((p: any) => p.slug === 'home' || p.slug === 'front-page' || p.id === 1) || wpPages[0];
+        if (!homeWpPage) return;
+
+        const rawTitle = homeWpPage.title?.rendered ? homeWpPage.title.rendered.replace(/<[^>]*>?/gm, '') : '';
+        const rawContent = homeWpPage.content?.rendered ? homeWpPage.content.rendered.replace(/<[^>]*>?/gm, '') : '';
+
+        if (rawTitle || rawContent) {
+          setSiteConfig(prev => {
+            const updatedPages = (prev.pages || []).map(page => {
+              if (page.slug === '/') {
+                return {
+                  ...page,
+                  metaTitle: rawTitle || page.metaTitle,
+                  metaDescription: rawContent ? rawContent.slice(0, 160) : page.metaDescription
+                };
+              }
+              return page;
+            });
+            return {
+              ...prev,
+              pages: updatedPages
+            };
+          });
+        }
+      } catch (err) {
+        console.warn('Auto WP pages fetch error (using fallback):', err);
+      }
+    }
+    fetchWpPages();
+  }, []);
+
   // Handle URL hash / path routes (e.g. /admin, /dashboard, /cms, #admin)
   useEffect(() => {
     if (blogView !== 'single-blog') {
